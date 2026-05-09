@@ -93,7 +93,7 @@ export default function App() {
       <div style={{ display: "flex", gap: 4, padding: "0 24px", borderBottom: "1px solid #1E2A45", background: "#0D1424" }}>
         {TABS.map(({ id, label }) => (
           <button key={id} onClick={() => setTab(id)} style={{
-            padding: "10px 16px", fontSize: 13, cursor: "pointer",
+            padding: "10px 16px", fontSize: 15, cursor: "pointer",
             borderBottom: tab === id ? "2px solid #F2C116" : "2px solid transparent",
             color: tab === id ? "#F2C116" : "#5A7298",
             fontWeight: tab === id ? 700 : 500,
