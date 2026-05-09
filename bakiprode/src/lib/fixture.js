@@ -1,110 +1,221 @@
+
+Copiar
+
 // ─────────────────────────────────────────────
 //  BakiProde — Fixture Mundial 2026
-//  Fechas y horarios aproximados (actualizar cuando FIFA los confirme)
+//  Fechas y horarios oficiales FIFA
+//  Horarios en hora de Buenos Aires (ET + 1h)
 // ─────────────────────────────────────────────
-
+ 
 export const FLAG_ISO = {
-  Argentina:       "ar", Ecuador:        "ec", Marruecos:      "ma", Ucrania:       "ua",
-  Brasil:          "br", México:         "mx", Polonia:        "pl", "Sudáfrica":   "za",
-  España:          "es", Alemania:       "de", Japón:          "jp", Canadá:        "ca",
-  Francia:         "fr", Portugal:       "pt", "Corea del Sur":"kr", Honduras:      "hn",
-  Inglaterra:      "gb-eng", Uruguay:    "uy", Senegal:        "sn", Eslovaquia:    "sk",
-  "Países Bajos":  "nl", Colombia:       "co", "Arabia Saudita":"sa", Suiza:        "ch",
-  "Estados Unidos":"us", Bélgica:        "be", "Costa Rica":   "cr", Camerún:       "cm",
-  Italia:          "it", Croacia:        "hr", Chile:          "cl", Australia:     "au",
-  Turquía:         "tr", Austria:        "at", Venezuela:      "ve", "Nueva Zelanda":"nz",
-  Serbia:          "rs", Egipto:         "eg", Paraguay:       "py", China:         "cn",
-  Ghana:           "gh", Irán:           "ir", "El Salvador":  "sv", Eslovenia:     "si",
-  Perú:            "pe", Irlanda:        "ie", Argelia:        "dz", Uzbekistán:    "uz",
+  "México":                "mx",
+  "Sudáfrica":             "za",
+  "Corea del Sur":         "kr",
+  "República Checa":       "cz",
+  "Canadá":                "ca",
+  "Bosnia y Herzegovina":  "ba",
+  "Catar":                 "qa",
+  "Suiza":                 "ch",
+  "Brasil":                "br",
+  "Marruecos":             "ma",
+  "Haití":                 "ht",
+  "Escocia":               "gb-sct",
+  "Estados Unidos":        "us",
+  "Paraguay":              "py",
+  "Australia":             "au",
+  "Turquía":               "tr",
+  "Alemania":              "de",
+  "Curazao":               "cw",
+  "Costa de Marfil":       "ci",
+  "Ecuador":               "ec",
+  "Países Bajos":          "nl",
+  "Japón":                 "jp",
+  "Suecia":                "se",
+  "Túnez":                 "tn",
+  "Bélgica":               "be",
+  "Egipto":                "eg",
+  "Irán":                  "ir",
+  "Nueva Zelanda":         "nz",
+  "España":                "es",
+  "Cabo Verde":            "cv",
+  "Arabia Saudita":        "sa",
+  "Uruguay":               "uy",
+  "Francia":               "fr",
+  "Noruega":               "no",
+  "Senegal":               "sn",
+  "Iraq":                  "iq",
+  "Argentina":             "ar",
+  "Argelia":               "dz",
+  "Austria":               "at",
+  "Jordania":              "jo",
+  "Portugal":              "pt",
+  "Colombia":              "co",
+  "RD del Congo":          "cd",
+  "Uzbekistán":            "uz",
+  "Inglaterra":            "gb-eng",
+  "Croacia":               "hr",
+  "Ghana":                 "gh",
+  "Panamá":                "pa",
 };
-
+ 
 export const GRUPOS = {
-  A: ["México",         "Sudáfrica",          "Corea del Sur",    "República Checa"],
-  B: ["Canadá",         "Bosnia y Herzegovina","Catar",            "Suiza"],
-  C: ["Brasil",         "Marruecos",           "Haití",            "Escocia"],
-  D: ["Estados Unidos", "Paraguay",            "Australia",        "Turquía"],
-  E: ["Alemania",       "Curazao",             "Costa de Marfil",  "Ecuador"],
-  F: ["Países Bajos",   "Japón",               "Suecia",           "Túnez"],
-  G: ["Bélgica",        "Egipto",              "Irán",             "Nueva Zelanda"],
-  H: ["España",         "Cabo Verde",          "Arabia Saudita",   "Uruguay"],
-  I: ["Francia",        "Noruega",             "Senegal",          "Iraq"],
-  J: ["Argentina",      "Argelia",             "Austria",          "Jordania"],
-  K: ["Portugal",       "Colombia",            "RD del Congo",     "Uzbekistán"],
-  L: ["Inglaterra",     "Croacia",             "Ghana",            "Panamá"],
+  A: ["México",         "Sudáfrica",           "Corea del Sur",   "República Checa"],
+  B: ["Canadá",         "Bosnia y Herzegovina","Catar",           "Suiza"],
+  C: ["Brasil",         "Marruecos",           "Haití",           "Escocia"],
+  D: ["Estados Unidos", "Paraguay",            "Australia",       "Turquía"],
+  E: ["Alemania",       "Curazao",             "Costa de Marfil", "Ecuador"],
+  F: ["Países Bajos",   "Japón",               "Suecia",          "Túnez"],
+  G: ["Bélgica",        "Egipto",              "Irán",            "Nueva Zelanda"],
+  H: ["España",         "Cabo Verde",          "Arabia Saudita",  "Uruguay"],
+  I: ["Francia",        "Noruega",             "Senegal",         "Iraq"],
+  J: ["Argentina",      "Argelia",             "Austria",         "Jordania"],
+  K: ["Portugal",       "Colombia",            "RD del Congo",    "Uzbekistán"],
+  L: ["Inglaterra",     "Croacia",             "Ghana",           "Panamá"],
 };
-
-const HORARIOS = ["15:00", "18:00", "21:00", "00:00"];
-
-function buildFixture() {
-  const partidos = [];
-  let id = 1;
-  const base = new Date("2026-06-11T00:00:00");
-
-  Object.entries(GRUPOS).forEach(([grupo, teams], gi) => {
-    const pairs = [];
-    for (let i = 0; i < teams.length - 1; i++)
-      for (let j = i + 1; j < teams.length; j++)
-        pairs.push([teams[i], teams[j]]);
-
-    pairs.forEach((pair, pi) => {
-      const d = new Date(base);
-      d.setDate(d.getDate() + Math.floor(gi / 2) + pi * 2);
-      const hora = HORARIOS[(gi + pi) % HORARIOS.length];
-      const [hh] = hora.split(":").map(Number);
-      const fechaSort = d.getTime() + hh * 3600 * 1000;
-
-      partidos.push({
-        id,
-        grupo,
-        local:     pair[0],
-        visitante: pair[1],
-        fecha:     d.toLocaleDateString("es-AR", { weekday: "short", day: "numeric", month: "short" }),
-        fechaISO:  d.toISOString().split("T")[0],
-        hora,
-        fechaSort,
-        fase:      "grupos",
-      });
-      id++;
-    });
-  });
-
-  partidos.sort((a, b) => a.fechaSort - b.fechaSort);
-  return partidos;
-}
-
-export const PARTIDOS_GRUPOS = buildFixture();
-
-// Bracket eliminatorio — los equipos se completan automáticamente
-// cuando termina la fase de grupos
+ 
+export const PARTIDOS_GRUPOS = [
+  { id:1,  grupo:"A", local:"México",              visitante:"Sudáfrica",            fecha:"jue, 11 jun", hora:"16:00", fechaISO:"2026-06-11", fechaSort:1749657600000 },
+  { id:2,  grupo:"A", local:"Corea del Sur",       visitante:"República Checa",      fecha:"jue, 11 jun", hora:"23:00", fechaISO:"2026-06-11", fechaSort:1749682800000 },
+  { id:3,  grupo:"B", local:"Canadá",              visitante:"Bosnia y Herzegovina", fecha:"vie, 12 jun", hora:"16:00", fechaISO:"2026-06-12", fechaSort:1749744000000 },
+  { id:4,  grupo:"D", local:"Estados Unidos",      visitante:"Paraguay",             fecha:"vie, 12 jun", hora:"22:00", fechaISO:"2026-06-12", fechaSort:1749765600000 },
+  { id:5,  grupo:"B", local:"Catar",               visitante:"Suiza",                fecha:"sáb, 13 jun", hora:"16:00", fechaISO:"2026-06-13", fechaSort:1749830400000 },
+  { id:6,  grupo:"C", local:"Brasil",              visitante:"Marruecos",            fecha:"sáb, 13 jun", hora:"19:00", fechaISO:"2026-06-13", fechaSort:1749841200000 },
+  { id:7,  grupo:"C", local:"Haití",               visitante:"Escocia",              fecha:"sáb, 13 jun", hora:"22:00", fechaISO:"2026-06-13", fechaSort:1749852000000 },
+  { id:8,  grupo:"D", local:"Australia",           visitante:"Turquía",              fecha:"dom, 14 jun", hora:"01:00", fechaISO:"2026-06-14", fechaSort:1749862800000 },
+  { id:9,  grupo:"E", local:"Alemania",            visitante:"Curazao",              fecha:"dom, 14 jun", hora:"14:00", fechaISO:"2026-06-14", fechaSort:1749909600000 },
+  { id:10, grupo:"F", local:"Países Bajos",        visitante:"Japón",                fecha:"dom, 14 jun", hora:"17:00", fechaISO:"2026-06-14", fechaSort:1749920400000 },
+  { id:11, grupo:"E", local:"Costa de Marfil",     visitante:"Ecuador",              fecha:"dom, 14 jun", hora:"20:00", fechaISO:"2026-06-14", fechaSort:1749931200000 },
+  { id:12, grupo:"F", local:"Suecia",              visitante:"Túnez",                fecha:"dom, 14 jun", hora:"23:00", fechaISO:"2026-06-14", fechaSort:1749942000000 },
+  { id:13, grupo:"H", local:"España",              visitante:"Cabo Verde",           fecha:"lun, 15 jun", hora:"13:00", fechaISO:"2026-06-15", fechaSort:1749992400000 },
+  { id:14, grupo:"G", local:"Bélgica",             visitante:"Egipto",               fecha:"lun, 15 jun", hora:"16:00", fechaISO:"2026-06-15", fechaSort:1750003200000 },
+  { id:15, grupo:"H", local:"Arabia Saudita",      visitante:"Uruguay",              fecha:"lun, 15 jun", hora:"19:00", fechaISO:"2026-06-15", fechaSort:1750014000000 },
+  { id:16, grupo:"G", local:"Irán",                visitante:"Nueva Zelanda",        fecha:"lun, 15 jun", hora:"22:00", fechaISO:"2026-06-15", fechaSort:1750024800000 },
+  { id:17, grupo:"I", local:"Francia",             visitante:"Senegal",              fecha:"mar, 16 jun", hora:"16:00", fechaISO:"2026-06-16", fechaSort:1749657600000 },
+  { id:18, grupo:"I", local:"Iraq",                visitante:"Noruega",              fecha:"mar, 16 jun", hora:"19:00", fechaISO:"2026-06-16", fechaSort:1750100400000 },
+  { id:19, grupo:"J", local:"Argentina",           visitante:"Argelia",              fecha:"mar, 16 jun", hora:"22:00", fechaISO:"2026-06-16", fechaSort:1750111200000 },
+  { id:20, grupo:"J", local:"Austria",             visitante:"Jordania",             fecha:"mié, 17 jun", hora:"01:00", fechaISO:"2026-06-17", fechaSort:1750122000000 },
+  { id:21, grupo:"K", local:"Portugal",            visitante:"RD del Congo",         fecha:"mié, 17 jun", hora:"14:00", fechaISO:"2026-06-17", fechaSort:1750165200000 },
+  { id:22, grupo:"L", local:"Inglaterra",          visitante:"Croacia",              fecha:"mié, 17 jun", hora:"17:00", fechaISO:"2026-06-17", fechaSort:1750176000000 },
+  { id:23, grupo:"L", local:"Ghana",               visitante:"Panamá",               fecha:"mié, 17 jun", hora:"20:00", fechaISO:"2026-06-17", fechaSort:1750186800000 },
+  { id:24, grupo:"K", local:"Uzbekistán",          visitante:"Colombia",             fecha:"mié, 17 jun", hora:"23:00", fechaISO:"2026-06-17", fechaSort:1750197600000 },
+  { id:25, grupo:"A", local:"República Checa",     visitante:"Sudáfrica",            fecha:"jue, 18 jun", hora:"13:00", fechaISO:"2026-06-18", fechaSort:1750244400000 },
+  { id:26, grupo:"B", local:"Suiza",               visitante:"Bosnia y Herzegovina", fecha:"jue, 18 jun", hora:"16:00", fechaISO:"2026-06-18", fechaSort:1750255200000 },
+  { id:27, grupo:"B", local:"Canadá",              visitante:"Catar",                fecha:"jue, 18 jun", hora:"19:00", fechaISO:"2026-06-18", fechaSort:1750266000000 },
+  { id:28, grupo:"A", local:"México",              visitante:"Corea del Sur",        fecha:"jue, 18 jun", hora:"22:00", fechaISO:"2026-06-18", fechaSort:1750276800000 },
+  { id:29, grupo:"D", local:"Estados Unidos",      visitante:"Australia",            fecha:"vie, 19 jun", hora:"16:00", fechaISO:"2026-06-19", fechaSort:1750341600000 },
+  { id:30, grupo:"C", local:"Escocia",             visitante:"Marruecos",            fecha:"vie, 19 jun", hora:"19:00", fechaISO:"2026-06-19", fechaSort:1750352400000 },
+  { id:31, grupo:"C", local:"Brasil",              visitante:"Haití",                fecha:"vie, 19 jun", hora:"22:00", fechaISO:"2026-06-19", fechaSort:1750363200000 },
+  { id:32, grupo:"D", local:"Turquía",             visitante:"Paraguay",             fecha:"sáb, 20 jun", hora:"01:00", fechaISO:"2026-06-20", fechaSort:1750374000000 },
+  { id:33, grupo:"F", local:"Países Bajos",        visitante:"Suecia",               fecha:"sáb, 20 jun", hora:"14:00", fechaISO:"2026-06-20", fechaSort:1750417200000 },
+  { id:34, grupo:"E", local:"Alemania",            visitante:"Costa de Marfil",      fecha:"sáb, 20 jun", hora:"17:00", fechaISO:"2026-06-20", fechaSort:1750428000000 },
+  { id:35, grupo:"E", local:"Ecuador",             visitante:"Curazao",              fecha:"sáb, 20 jun", hora:"23:00", fechaISO:"2026-06-20", fechaSort:1750449600000 },
+  { id:36, grupo:"F", local:"Túnez",               visitante:"Japón",                fecha:"dom, 21 jun", hora:"01:00", fechaISO:"2026-06-21", fechaSort:1750460400000 },
+  { id:37, grupo:"H", local:"España",              visitante:"Arabia Saudita",       fecha:"dom, 21 jun", hora:"13:00", fechaISO:"2026-06-21", fechaSort:1750503600000 },
+  { id:38, grupo:"G", local:"Bélgica",             visitante:"Irán",                 fecha:"dom, 21 jun", hora:"16:00", fechaISO:"2026-06-21", fechaSort:1750514400000 },
+  { id:39, grupo:"H", local:"Uruguay",             visitante:"Cabo Verde",           fecha:"dom, 21 jun", hora:"19:00", fechaISO:"2026-06-21", fechaSort:1750525200000 },
+  { id:40, grupo:"G", local:"Nueva Zelanda",       visitante:"Egipto",               fecha:"dom, 21 jun", hora:"22:00", fechaISO:"2026-06-21", fechaSort:1750536000000 },
+  { id:41, grupo:"J", local:"Argentina",           visitante:"Austria",              fecha:"lun, 22 jun", hora:"14:00", fechaISO:"2026-06-22", fechaSort:1750590000000 },
+  { id:42, grupo:"I", local:"Francia",             visitante:"Iraq",                 fecha:"lun, 22 jun", hora:"18:00", fechaISO:"2026-06-22", fechaSort:1750604400000 },
+  { id:43, grupo:"I", local:"Noruega",             visitante:"Senegal",              fecha:"lun, 22 jun", hora:"21:00", fechaISO:"2026-06-22", fechaSort:1750615200000 },
+  { id:44, grupo:"J", local:"Jordania",            visitante:"Argelia",              fecha:"mar, 23 jun", hora:"00:00", fechaISO:"2026-06-23", fechaSort:1750626000000 },
+  { id:45, grupo:"K", local:"Portugal",            visitante:"Uzbekistán",           fecha:"mar, 23 jun", hora:"14:00", fechaISO:"2026-06-23", fechaSort:1750676400000 },
+  { id:46, grupo:"L", local:"Inglaterra",          visitante:"Ghana",                fecha:"mar, 23 jun", hora:"17:00", fechaISO:"2026-06-23", fechaSort:1750687200000 },
+  { id:47, grupo:"L", local:"Panamá",              visitante:"Croacia",              fecha:"mar, 23 jun", hora:"20:00", fechaISO:"2026-06-23", fechaSort:1750698000000 },
+  { id:48, grupo:"K", local:"Colombia",            visitante:"RD del Congo",         fecha:"mar, 23 jun", hora:"23:00", fechaISO:"2026-06-23", fechaSort:1750708800000 },
+  { id:49, grupo:"B", local:"Suiza",               visitante:"Canadá",               fecha:"mié, 24 jun", hora:"16:00", fechaISO:"2026-06-24", fechaSort:1750762800000 },
+  { id:50, grupo:"B", local:"Bosnia y Herzegovina",visitante:"Catar",                fecha:"mié, 24 jun", hora:"16:00", fechaISO:"2026-06-24", fechaSort:1750762800000 },
+  { id:51, grupo:"C", local:"Escocia",             visitante:"Brasil",               fecha:"mié, 24 jun", hora:"19:00", fechaISO:"2026-06-24", fechaSort:1750773600000 },
+  { id:52, grupo:"C", local:"Marruecos",           visitante:"Haití",                fecha:"mié, 24 jun", hora:"19:00", fechaISO:"2026-06-24", fechaSort:1750773600000 },
+  { id:53, grupo:"A", local:"República Checa",     visitante:"México",               fecha:"mié, 24 jun", hora:"22:00", fechaISO:"2026-06-24", fechaSort:1750784400000 },
+  { id:54, grupo:"A", local:"Sudáfrica",           visitante:"Corea del Sur",        fecha:"mié, 24 jun", hora:"22:00", fechaISO:"2026-06-24", fechaSort:1750784400000 },
+  { id:55, grupo:"E", local:"Curazao",             visitante:"Costa de Marfil",      fecha:"jue, 25 jun", hora:"17:00", fechaISO:"2026-06-25", fechaSort:1750860000000 },
+  { id:56, grupo:"E", local:"Ecuador",             visitante:"Alemania",             fecha:"jue, 25 jun", hora:"17:00", fechaISO:"2026-06-25", fechaSort:1750860000000 },
+  { id:57, grupo:"F", local:"Japón",               visitante:"Suecia",               fecha:"jue, 25 jun", hora:"20:00", fechaISO:"2026-06-25", fechaSort:1750870800000 },
+  { id:58, grupo:"F", local:"Túnez",               visitante:"Países Bajos",         fecha:"jue, 25 jun", hora:"20:00", fechaISO:"2026-06-25", fechaSort:1750870800000 },
+  { id:59, grupo:"D", local:"Turquía",             visitante:"Estados Unidos",       fecha:"jue, 25 jun", hora:"23:00", fechaISO:"2026-06-25", fechaSort:1750881600000 },
+  { id:60, grupo:"D", local:"Paraguay",            visitante:"Australia",            fecha:"jue, 25 jun", hora:"23:00", fechaISO:"2026-06-25", fechaSort:1750881600000 },
+  { id:61, grupo:"I", local:"Noruega",             visitante:"Francia",              fecha:"vie, 26 jun", hora:"16:00", fechaISO:"2026-06-26", fechaSort:1750946400000 },
+  { id:62, grupo:"I", local:"Senegal",             visitante:"Iraq",                 fecha:"vie, 26 jun", hora:"16:00", fechaISO:"2026-06-26", fechaSort:1750946400000 },
+  { id:63, grupo:"H", local:"Cabo Verde",          visitante:"Arabia Saudita",       fecha:"vie, 26 jun", hora:"21:00", fechaISO:"2026-06-26", fechaSort:1750964400000 },
+  { id:64, grupo:"H", local:"Uruguay",             visitante:"España",               fecha:"vie, 26 jun", hora:"21:00", fechaISO:"2026-06-26", fechaSort:1750964400000 },
+  { id:65, grupo:"G", local:"Egipto",              visitante:"Irán",                 fecha:"sáb, 27 jun", hora:"00:00", fechaISO:"2026-06-27", fechaSort:1750975200000 },
+  { id:66, grupo:"G", local:"Nueva Zelanda",       visitante:"Bélgica",              fecha:"sáb, 27 jun", hora:"00:00", fechaISO:"2026-06-27", fechaSort:1750975200000 },
+  { id:67, grupo:"L", local:"Panamá",              visitante:"Inglaterra",           fecha:"sáb, 27 jun", hora:"18:00", fechaISO:"2026-06-27", fechaSort:1751032800000 },
+  { id:68, grupo:"L", local:"Croacia",             visitante:"Ghana",                fecha:"sáb, 27 jun", hora:"18:00", fechaISO:"2026-06-27", fechaSort:1751032800000 },
+  { id:69, grupo:"K", local:"Colombia",            visitante:"Portugal",             fecha:"sáb, 27 jun", hora:"20:30", fechaISO:"2026-06-27", fechaSort:1751041800000 },
+  { id:70, grupo:"K", local:"RD del Congo",        visitante:"Uzbekistán",           fecha:"sáb, 27 jun", hora:"20:30", fechaISO:"2026-06-27", fechaSort:1751041800000 },
+  { id:71, grupo:"J", local:"Argelia",             visitante:"Austria",              fecha:"sáb, 27 jun", hora:"23:00", fechaISO:"2026-06-27", fechaSort:1751050800000 },
+  { id:72, grupo:"J", local:"Jordania",            visitante:"Argentina",            fecha:"sáb, 27 jun", hora:"23:00", fechaISO:"2026-06-27", fechaSort:1751050800000 },
+];
+ 
 export const BRACKET_ELIM = [
+  {
+    fase: "Dieciseisavos de final",
+    ronda: "R32",
+    partidos: [
+      { id:"P73",  label:"2º A vs 2º B",          fecha:"dom, 28 jun" },
+      { id:"P74",  label:"1º E vs 3º A/B/C/D/F",  fecha:"lun, 29 jun" },
+      { id:"P75",  label:"1º F vs 2º C",          fecha:"lun, 29 jun" },
+      { id:"P76",  label:"1º C vs 2º F",          fecha:"lun, 29 jun" },
+      { id:"P77",  label:"1º I vs 3º C/D/F/G/H",  fecha:"mar, 30 jun" },
+      { id:"P78",  label:"2º E vs 2º I",          fecha:"mar, 30 jun" },
+      { id:"P79",  label:"1º A vs 3º C/E/F/H/I",  fecha:"mar, 30 jun" },
+      { id:"P80",  label:"1º L vs 3º E/H/I/J/K",  fecha:"mié, 1 jul"  },
+      { id:"P81",  label:"1º D vs 3º B/E/F/I/J",  fecha:"mié, 1 jul"  },
+      { id:"P82",  label:"1º G vs 3º A/E/H/I/J",  fecha:"mié, 1 jul"  },
+      { id:"P83",  label:"2º K vs 2º L",          fecha:"jue, 2 jul"  },
+      { id:"P84",  label:"1º H vs 2º J",          fecha:"jue, 2 jul"  },
+      { id:"P85",  label:"1º B vs 3º E/F/G/I/J",  fecha:"jue, 2 jul"  },
+      { id:"P86",  label:"1º J vs 2º H",          fecha:"vie, 3 jul"  },
+      { id:"P87",  label:"1º K vs 3º D/E/I/J/L",  fecha:"vie, 3 jul"  },
+      { id:"P88",  label:"2º D vs 2º G",          fecha:"vie, 3 jul"  },
+    ],
+  },
   {
     fase: "Octavos de final",
     ronda: "R16",
     partidos: [
-      { id: "R16_1", label: "1A vs 2B" }, { id: "R16_2", label: "1C vs 2D" },
-      { id: "R16_3", label: "1E vs 2F" }, { id: "R16_4", label: "1G vs 2H" },
-      { id: "R16_5", label: "1B vs 2A" }, { id: "R16_6", label: "1D vs 2C" },
-      { id: "R16_7", label: "1F vs 2E" }, { id: "R16_8", label: "1H vs 2G" },
+      { id:"P89",  label:"Gan. P74 vs Gan. P77",  fecha:"sáb, 4 jul"  },
+      { id:"P90",  label:"Gan. P73 vs Gan. P75",  fecha:"sáb, 4 jul"  },
+      { id:"P91",  label:"Gan. P76 vs Gan. P78",  fecha:"dom, 5 jul"  },
+      { id:"P92",  label:"Gan. P79 vs Gan. P80",  fecha:"dom, 5 jul"  },
+      { id:"P93",  label:"Gan. P83 vs Gan. P84",  fecha:"lun, 6 jul"  },
+      { id:"P94",  label:"Gan. P81 vs Gan. P82",  fecha:"lun, 6 jul"  },
+      { id:"P95",  label:"Gan. P86 vs Gan. P88",  fecha:"mar, 7 jul"  },
+      { id:"P96",  label:"Gan. P85 vs Gan. P87",  fecha:"mar, 7 jul"  },
     ],
   },
   {
     fase: "Cuartos de final",
     ronda: "QF",
     partidos: [
-      { id: "QF_1", label: "G1 Octavos" }, { id: "QF_2", label: "G2 Octavos" },
-      { id: "QF_3", label: "G3 Octavos" }, { id: "QF_4", label: "G4 Octavos" },
+      { id:"P97",  label:"Gan. P89 vs Gan. P90",  fecha:"jue, 9 jul"  },
+      { id:"P98",  label:"Gan. P93 vs Gan. P94",  fecha:"vie, 10 jul" },
+      { id:"P99",  label:"Gan. P91 vs Gan. P92",  fecha:"sáb, 11 jul" },
+      { id:"P100", label:"Gan. P95 vs Gan. P96",  fecha:"sáb, 11 jul" },
     ],
   },
   {
     fase: "Semifinales",
     ronda: "SF",
     partidos: [
-      { id: "SF_1", label: "G1 Cuartos" }, { id: "SF_2", label: "G2 Cuartos" },
+      { id:"P101", label:"Gan. P97 vs Gan. P98",  fecha:"mar, 14 jul" },
+      { id:"P102", label:"Gan. P99 vs Gan. P100", fecha:"mié, 15 jul" },
+    ],
+  },
+  {
+    fase: "Tercer puesto",
+    ronda: "3P",
+    partidos: [
+      { id:"P103", label:"Per. P101 vs Per. P102 — Miami", fecha:"sáb, 18 jul" },
     ],
   },
   {
     fase: "Final",
     ronda: "F",
-    partidos: [{ id: "FINAL", label: "Final" }],
+    partidos: [
+      { id:"P104", label:"Gan. P101 vs Gan. P102 — MetLife Stadium, Nueva York", fecha:"dom, 19 jul" },
+    ],
   },
 ];
+ 
