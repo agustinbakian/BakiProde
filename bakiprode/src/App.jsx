@@ -66,12 +66,11 @@ export default function App() {
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{
-              width: 40, height: 40, borderRadius: "50%", background: "#0F6E56",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              <span style={{ color: "#9FE1CB", fontWeight: 700, fontSize: 16 }}>B</span>
-            </div>
+            <img
+  src="/logo.png"
+  alt="Bakián"
+  style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover" }}
+/>
             <div>
               <div style={{ fontSize: 18, fontWeight: 700, color: "#111" }}>BakiProde</div>
               <div style={{ fontSize: 12, color: "#888" }}>Hola, {user.displayName?.split(" ")[0]}</div>
