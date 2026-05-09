@@ -2,7 +2,7 @@ import { FLAG_ISO } from "../lib/fixture";
 
 export function Flag({ country, size = 24 }) {
   const code = FLAG_ISO[country];
-  if (!code) return <span style={{ fontSize: size * 0.75 }}>🏳</span>;
+  if (!code) return null;
   const h = Math.round(size * 0.75);
   return (
     <img
