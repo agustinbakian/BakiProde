@@ -118,7 +118,7 @@ export default function App() {
 
         {/* Content */}
         {tab === "fixture"      && <FixturePage       user={user} />}
-        {tab === "eliminatoria" && <EliminatoriasPage />}
+        {tab === "eliminatoria" && <EliminatoriasPage user={user} />}
         {tab === "ranking"      && <RankingPage        user={user} />}
       </div>
     </div>
