@@ -19,18 +19,18 @@ export const FLAG_ISO = {
 };
 
 export const GRUPOS = {
-  A: ["Argentina",      "Ecuador",       "Marruecos",     "Ucrania"],
-  B: ["Brasil",         "México",        "Polonia",       "Sudáfrica"],
-  C: ["España",         "Alemania",      "Japón",         "Canadá"],
-  D: ["Francia",        "Portugal",      "Corea del Sur", "Honduras"],
-  E: ["Inglaterra",     "Uruguay",       "Senegal",       "Eslovaquia"],
-  F: ["Países Bajos",   "Colombia",      "Arabia Saudita","Suiza"],
-  G: ["Estados Unidos", "Bélgica",       "Costa Rica",    "Camerún"],
-  H: ["Italia",         "Croacia",       "Chile",         "Australia"],
-  I: ["Turquía",        "Austria",       "Venezuela",     "Nueva Zelanda"],
-  J: ["Serbia",         "Egipto",        "Paraguay",      "China"],
-  K: ["Ghana",          "Irán",          "El Salvador",   "Eslovenia"],
-  L: ["Perú",           "Irlanda",       "Argelia",       "Uzbekistán"],
+  A: ["México",         "Sudáfrica",          "Corea del Sur",    "República Checa"],
+  B: ["Canadá",         "Bosnia y Herzegovina","Catar",            "Suiza"],
+  C: ["Brasil",         "Marruecos",           "Haití",            "Escocia"],
+  D: ["Estados Unidos", "Paraguay",            "Australia",        "Turquía"],
+  E: ["Alemania",       "Curazao",             "Costa de Marfil",  "Ecuador"],
+  F: ["Países Bajos",   "Japón",               "Suecia",           "Túnez"],
+  G: ["Bélgica",        "Egipto",              "Irán",             "Nueva Zelanda"],
+  H: ["España",         "Cabo Verde",          "Arabia Saudita",   "Uruguay"],
+  I: ["Francia",        "Noruega",             "Senegal",          "Iraq"],
+  J: ["Argentina",      "Argelia",             "Austria",          "Jordania"],
+  K: ["Portugal",       "Colombia",            "RD del Congo",     "Uzbekistán"],
+  L: ["Inglaterra",     "Croacia",             "Ghana",            "Panamá"],
 };
 
 const HORARIOS = ["15:00", "18:00", "21:00", "00:00"];
