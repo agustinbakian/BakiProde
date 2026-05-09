@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { subscribeToResults } from "../lib/db";
-import { PARTIDOS_GRUPOS, GRUPOS, BRACKET_ELIM } from "../lib/fixture";
+import { subscribeToResults, subscribeToPredictions, savePrediction } from "../lib/db";
+import { PARTIDOS_GRUPOS, GRUPOS, BRACKET_ELIM, FLAG_ISO } from "../lib/fixture";
 
 function calcClasificados(results) {
   const tablas = {};
@@ -31,39 +31,137 @@ function calcClasificados(results) {
   return clasificados;
 }
 
-// Columnas por fase para la grilla
-const COLS = { R32: 4, R16: 4, QF: 2, SF: 2, "3P": 1, F: 1 };
+function Flag({ country }) {
+  const code = FLAG_ISO[country];
+  if (!code) return null;
+  return (
+    <img
+      src={`https://flagcdn.com/20x15/${code}.png`}
+      width={20} height={15}
+      alt={country}
+      style={{ borderRadius: 2, objectFit: "cover", border: "0.5px solid rgba(0,0,0,0.1)", flexShrink: 0 }}
+    />
+  );
+}
 
-function ElimCard({ partido }) {
+function ScoreInput({ value, onChange, disabled }) {
+  return (
+    <input
+      type="number" min="0" max="20"
+      value={value ?? ""}
+      placeholder="—"
+      disabled={disabled}
+      onChange={(e) => onChange(e.target.value === "" ? null : parseInt(e.target.value, 10))}
+      style={{
+        width: 32, height: 32, textAlign: "center", fontSize: 14, fontWeight: 600,
+        border: "1px solid #ddd", borderRadius: 8,
+        background: disabled ? "#f5f5f0" : "#fafafa",
+        color: disabled ? "#999" : "#111",
+        outline: "none",
+      }}
+    />
+  );
+}
+
+function ElimCard({ partido, equipos, pred, onSave, result }) {
+  const [local, visitante] = equipos || [null, null];
+  const locked = !!result;
+  const hasPred = pred && pred.local != null && pred.visitante != null;
+
   return (
     <div style={{
       background: "#fff",
-      border: "0.5px solid #eee",
+      border: hasPred ? "1.5px solid #1D9E75" : "0.5px solid #eee",
       borderRadius: 10,
       padding: "10px 12px",
-      fontSize: 12,
     }}>
-      <div style={{ fontWeight: 600, color: "#0F6E56", marginBottom: 3 }}>
+      <div style={{ fontSize: 11, fontWeight: 600, color: "#0F6E56", marginBottom: 6 }}>
         {partido.fecha}
       </div>
-      <div style={{ color: "#444", lineHeight: 1.4 }}>
-        {partido.label}
-      </div>
+
+      {local && visitante ? (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+            <Flag country={local} />
+            <span style={{ fontSize: 12, fontWeight: 600, color: "#111", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {local}
+            </span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 4, justifyContent: "center", margin: "6px 0" }}>
+            {locked ? (
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>
+                {result.local} : {result.visitante}
+              </span>
+            ) : (
+              <>
+                <ScoreInput value={pred?.local ?? null}     onChange={(v) => onSave("local", v)}     disabled={locked} />
+                <span style={{ fontSize: 11, color: "#ccc" }}>:</span>
+                <ScoreInput value={pred?.visitante ?? null} onChange={(v) => onSave("visitante", v)} disabled={locked} />
+              </>
+            )}
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+            <Flag country={visitante} />
+            <span style={{ fontSize: 12, fontWeight: 600, color: "#111", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {visitante}
+            </span>
+          </div>
+        </>
+      ) : (
+        <div style={{ fontSize: 11, color: "#aaa", fontStyle: "italic", textAlign: "center", padding: "8px 0" }}>
+          {partido.label}
+        </div>
+      )}
     </div>
   );
 }
 
-export function EliminatoriasPage() {
-  const [results, setResults] = useState({});
+const COLS = { R32: 4, R16: 4, QF: 2, SF: 2, "3P": 1, F: 1 };
+
+export function EliminatoriasPage({ user }) {
+  const [results,     setResults]     = useState({});
+  const [predictions, setPredictions] = useState({});
+  const [drafts,      setDrafts]      = useState({});
 
   useEffect(() => {
-    return subscribeToResults(setResults);
-  }, []);
+    const u1 = subscribeToResults(setResults);
+    const u2 = subscribeToPredictions(user.uid, setPredictions);
+    return () => { u1(); u2(); };
+  }, [user.uid]);
 
   const totalGrupos = PARTIDOS_GRUPOS.length;
   const finalizados = PARTIDOS_GRUPOS.filter((p) => results[p.id]).length;
   const gruposCompletos = finalizados === totalGrupos;
   const pct = Math.round((finalizados / totalGrupos) * 100);
+
+  const clasificados = gruposCompletos ? calcClasificados(results) : null;
+
+  function getEquipos(label) {
+    if (!clasificados) return null;
+    const m = label.match(/^(\d)º ([A-L]) vs (\d)º ([A-L])$/);
+    if (m) {
+      const e1 = clasificados[m[2]]?.[parseInt(m[1]) - 1];
+      const e2 = clasificados[m[4]]?.[parseInt(m[3]) - 1];
+      if (e1 && e2) return [e1, e2];
+    }
+    return null;
+  }
+
+  function handleSave(partidoId, side, val) {
+    setDrafts((prev) => {
+      const current = prev[partidoId] ?? {
+        local:     predictions[partidoId]?.local     ?? null,
+        visitante: predictions[partidoId]?.visitante ?? null,
+      };
+      const updated = { ...current, [side]: val };
+      if (updated.local !== null && updated.visitante !== null) {
+        savePrediction(user.uid, partidoId, updated.local, updated.visitante);
+      }
+      return { ...prev, [partidoId]: updated };
+    });
+  }
 
   return (
     <div>
@@ -75,7 +173,7 @@ export function EliminatoriasPage() {
             display: "flex", alignItems: "center", gap: 8,
           }}>
             <span>🔒</span>
-            Los cruces se completan automáticamente cuando terminen todos los partidos de grupos.
+            Los equipos aparecen automáticamente cuando terminen todos los partidos de grupos.
           </div>
           <div style={{ fontSize: 13, color: "#888", marginBottom: 6 }}>
             {finalizados} de {totalGrupos} partidos de grupos finalizados
@@ -93,10 +191,7 @@ export function EliminatoriasPage() {
         const cols = COLS[fase.ronda] || 2;
         return (
           <div key={fase.ronda}>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 8,
-              margin: "20px 0 10px",
-            }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "20px 0 10px" }}>
               <span style={{
                 background: "#E1F5EE", color: "#085041", fontSize: 12,
                 fontWeight: 600, padding: "3px 12px", borderRadius: 20,
@@ -110,9 +205,21 @@ export function EliminatoriasPage() {
               gap: 8,
               marginBottom: 4,
             }}>
-              {fase.partidos.map((p) => (
-                <ElimCard key={p.id} partido={p} />
-              ))}
+              {fase.partidos.map((p) => {
+                const pred   = drafts[p.id] ?? predictions[p.id];
+                const result = results[p.id];
+                const equipos = getEquipos(p.label);
+                return (
+                  <ElimCard
+                    key={p.id}
+                    partido={p}
+                    equipos={equipos}
+                    pred={pred}
+                    result={result}
+                    onSave={(side, val) => handleSave(p.id, side, val)}
+                  />
+                );
+              })}
             </div>
           </div>
         );
