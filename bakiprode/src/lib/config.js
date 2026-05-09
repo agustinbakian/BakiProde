@@ -5,15 +5,15 @@
 // ─────────────────────────────────────────────
 
 export const FIREBASE_CONFIG = {
-  apiKey:            "TU_FIREBASE_API_KEY",
-  authDomain:        "TU_PROYECTO.firebaseapp.com",
-  projectId:         "TU_PROYECTO",
-  storageBucket:     "TU_PROYECTO.appspot.com",
-  messagingSenderId: "TU_SENDER_ID",
-  appId:             "TU_APP_ID",
+  apiKey:            "AIzaSyDQq0r5ROlYvaaTwynVzbp_6sFA98qa6E4",
+  authDomain:        "bakiprode.firebaseapp.com",
+  projectId:         "bakiprode",
+  storageBucket:     "bakiprode.appspot.com",
+  messagingSenderId: "123456789",
+  appId:             "1:123456789:web:abc123",
 };
 
-export const FOOTBALL_DATA_API_KEY = "TU_FOOTBALL_DATA_API_KEY";
+export const FOOTBALL_DATA_API_KEY = "15f6f92d4bbb432c9702e5bfe4e8254d";
 
 // ID de la competencia Mundial 2026 en football-data.org
 // Actualizar cuando esté disponible (actualmente WC = 2000)
