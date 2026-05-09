@@ -37,7 +37,7 @@ export function SidebarRanking({ user }) {
   return (
     <div>
       {/* Ranking */}
-      <div style={{ fontSize: 11, fontWeight: 700, color: "#5A7298", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 12 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: "#5A7298", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 12 }}>
         Ranking
       </div>
 
@@ -81,7 +81,7 @@ export function SidebarRanking({ user }) {
 
       {/* Mis stats */}
       <div style={{ borderTop: "1px solid #1E2A45", marginTop: 14, paddingTop: 14 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: "#5A7298", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 10 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#5A7298", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 10 }}>
           Mis stats
         </div>
         {[
@@ -91,8 +91,8 @@ export function SidebarRanking({ user }) {
           { label: "Sin pronosticar",  value: myStats.predCount != null ? (72 - myStats.predCount) : "—", color: "#E8EDF5" },
         ].map(({ label, value, color }) => (
           <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: "1px solid #1E2A45" }}>
-            <span style={{ fontSize: 11, color: "#5A7298" }}>{label}</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color }}>{value}</span>
+            <span style={{ fontSize: 13, color: "#5A7298" }}>{label}</span>
+            <span style={{ fontSize: 15, fontWeight: 700, color }}>{value}</span>
           </div>
         ))}
       </div>
