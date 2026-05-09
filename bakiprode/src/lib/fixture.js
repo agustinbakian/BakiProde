@@ -1,6 +1,3 @@
-
-Copiar
-
 // ─────────────────────────────────────────────
 //  BakiProde — Fixture Mundial 2026
 //  Fechas y horarios oficiales FIFA
