@@ -2,117 +2,118 @@ import { useEffect } from "react";
 import { saveResult } from "../lib/db";
 import { PARTIDOS_GRUPOS } from "../lib/fixture";
 
-const NAME_MAP = {
-  "Morocco":          "Marruecos",
-  "Ukraine":          "Ucrania",
-  "South Africa":     "Sudáfrica",
-  "Japan":            "Japón",
-  "Canada":           "Canadá",
-  "France":           "Francia",
-  "South Korea":      "Corea del Sur",
-  "England":          "Inglaterra",
-  "Slovakia":         "Eslovaquia",
-  "Netherlands":      "Países Bajos",
-  "Saudi Arabia":     "Arabia Saudita",
-  "Switzerland":      "Suiza",
-  "United States":    "Estados Unidos",
-  "Belgium":          "Bélgica",
-  "Italy":            "Italia",
-  "Croatia":          "Croacia",
-  "Turkey":           "Turquía",
-  "New Zealand":      "Nueva Zelanda",
-  "El Salvador":      "El Salvador",
-  "Slovenia":         "Eslovenia",
-  "Algeria":          "Argelia",
-  "Uzbekistan":       "Uzbekistán",
-  "Ireland":          "Irlanda",
-  "Germany":          "Alemania",
-  "Spain":            "España",
-  "Portugal":         "Portugal",
-  "Colombia":         "Colombia",
-  "Venezuela":        "Venezuela",
-  "Serbia":           "Serbia",
-  "Egypt":            "Egipto",
-  "Paraguay":         "Paraguay",
-  "China":            "China",
-  "Poland":           "Polonia",
-  "Mexico":           "México",
-  "Brazil":           "Brasil",
-  "Argentina":        "Argentina",
-  "Uruguay":          "Uruguay",
-  "Ecuador":          "Ecuador",
-  "Chile":            "Chile",
-  "Peru":             "Perú",
-  "Ghana":            "Ghana",
-  "Iran":             "Irán",
-  "Honduras":         "Honduras",
-  "Senegal":          "Senegal",
-  "Cameroon":         "Camerún",
-  "Costa Rica":       "Costa Rica",
-  "Austria":          "Austria",
-  "Norway":           "Noruega",
-  "Sweden":           "Suecia",
-  "Tunisia":          "Túnez",
-  "Curacao":          "Curazao",
-  "Ivory Coast":      "Costa de Marfil",
-  "Cape Verde":       "Cabo Verde",
-  "Iraq":             "Iraq",
-  "Jordan":           "Jordania",
-  "DR Congo":         "RD del Congo",
-  "Panama":           "Panamá",
-  "Scotland":         "Escocia",
-  "Haiti":            "Haití",
-  "Australia":        "Australia",
-  "Qatar":            "Catar",
-  "Bosnia and Herzegovina": "Bosnia y Herzegovina",
-  "Czech Republic":   "República Checa",
-  "Czechia":          "República Checa",
-};
-
 function normalizeName(name) {
-  return NAME_MAP[name] || name;
+  const MAP = {
+    "Mexico":             "México",
+    "South Africa":       "Sudáfrica",
+    "Korea Republic":     "Corea del Sur",
+    "Czech Republic":     "República Checa",
+    "Czechia":            "República Checa",
+    "Canada":             "Canadá",
+    "Bosnia and Herzegovina": "Bosnia y Herzegovina",
+    "United States":      "Estados Unidos",
+    "Netherlands":        "Países Bajos",
+    "Japan":              "Japón",
+    "Sweden":             "Suecia",
+    "Tunisia":            "Túnez",
+    "Belgium":            "Bélgica",
+    "Iran":               "Irán",
+    "New Zealand":        "Nueva Zelanda",
+    "Spain":              "España",
+    "Cape Verde":         "Cabo Verde",
+    "Saudi Arabia":       "Arabia Saudita",
+    "France":             "Francia",
+    "Norway":             "Noruega",
+    "Senegal":            "Senegal",
+    "Argentina":          "Argentina",
+    "Algeria":            "Argelia",
+    "Austria":            "Austria",
+    "Jordan":             "Jordania",
+    "Portugal":           "Portugal",
+    "DR Congo":           "RD del Congo",
+    "Uzbekistan":         "Uzbekistán",
+    "England":            "Inglaterra",
+    "Croatia":            "Croacia",
+    "Panama":             "Panamá",
+    "Scotland":           "Escocia",
+    "Haiti":              "Haití",
+    "Turkey":             "Turquía",
+    "Germany":            "Alemania",
+    "Curacao":            "Curazao",
+    "Ivory Coast":        "Costa de Marfil",
+    "Ecuador":            "Ecuador",
+    "Morocco":            "Marruecos",
+    "Switzerland":        "Suiza",
+    "Qatar":              "Catar",
+    "Serbia":             "Serbia",
+    "Egypt":              "Egipto",
+    "Paraguay":           "Paraguay",
+    "China PR":           "China",
+    "Ghana":              "Ghana",
+    "El Salvador":        "El Salvador",
+    "Slovenia":           "Eslovenia",
+    "Peru":               "Perú",
+    "Ireland":            "Irlanda",
+    "Uruguay":            "Uruguay",
+    "Honduras":           "Honduras",
+    "Brazil":             "Brasil",
+    "Colombia":           "Colombia",
+    "Costa Rica":         "Costa Rica",
+    "Cameroon":           "Camerún",
+    "Italy":              "Italia",
+    "Australia":          "Australia",
+    "Venezuela":          "Venezuela",
+    "Iraq":               "Iraq",
+  };
+  return MAP[name] || name;
 }
 
 function findPartidoId(homeTeam, awayTeam) {
   const local     = normalizeName(homeTeam);
   const visitante = normalizeName(awayTeam);
-  const p = PARTIDOS_GRUPOS.find(
+  return PARTIDOS_GRUPOS.find(
     (p) => p.local === local && p.visitante === visitante
-  );
-  return p?.id ?? null;
+  )?.id ?? null;
 }
 
 export function useResultsSync() {
   useEffect(() => {
     async function sync() {
       try {
-        const res = await fetch("/api/resultados");
+        const res  = await fetch("/api/resultados");
         if (!res.ok) return;
         const data = await res.json();
 
-        for (const match of data.matches ?? []) {
-          // Bloquear partidos en curso o finalizados
-          if (!["IN_PLAY", "PAUSED", "FINISHED"].includes(match.status)) continue;
-          
-          const id = findPartidoId(match.homeTeam.name, match.awayTeam.name);
+        for (const event of data.events ?? []) {
+          const competition = event.competitions?.[0];
+          if (!competition) continue;
+
+          const status = competition.status?.type?.state;
+          // Solo partidos en curso o finalizados
+          if (!["in", "post"].includes(status)) continue;
+
+          const competitors = competition.competitors ?? [];
+          const home = competitors.find((c) => c.homeAway === "home");
+          const away = competitors.find((c) => c.homeAway === "away");
+          if (!home || !away) continue;
+
+          const homeScore = parseInt(home.score ?? 0);
+          const awayScore = parseInt(away.score ?? 0);
+          if (isNaN(homeScore) || isNaN(awayScore)) continue;
+
+          const id = findPartidoId(home.team.displayName, away.team.displayName);
           if (!id) continue;
 
-          const { home, away } = match.score.fullTime;
-          
-          // Para partidos en curso usar el score parcial
-          const scoreHome = home ?? match.score.halfTime?.home ?? 0;
-          const scoreAway = away ?? match.score.halfTime?.away ?? 0;
-          
-          if (scoreHome === null || scoreAway === null) continue;
-          await saveResult(id, scoreHome, scoreAway);
+          const { saveResult } = await import("../lib/db");
+          await saveResult(id, homeScore, awayScore);
         }
       } catch (e) {
-        console.error("[BakiProde] Error sincronizando resultados:", e);
+        console.error("[BakiProde] Error sincronizando resultados ESPN:", e);
       }
     }
 
     sync();
-    const interval = setInterval(sync, 3 * 60 * 1000); // cada 3 minutos
+    const interval = setInterval(sync, 3 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 }
