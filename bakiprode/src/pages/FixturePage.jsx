@@ -14,19 +14,25 @@ function getPartidoStyle(pts, hasPred, isFinished) {
       borderLeft: hasPred ? "3px solid #F2C116" : "1px solid #1E2A45",
     };
   }
-  if (pts === POINTS.EXACT)  return { background: "#1A1500", border: "1px solid #F2C116", borderLeft: "3px solid #F2C116" };
-  if (pts === POINTS.WINNER) return { background: "#0D1A0D", border: "1px solid #2E7D32", borderLeft: "3px solid #4CAF50" };
-  if (hasPred)               return { background: "#1A0A0A", border: "1px solid #5D1A1A", borderLeft: "3px solid #B71C1C" };
+  // Verde = exacto (+3)
+  if (pts === POINTS.EXACT)  return { background: "#0A1F0A", border: "1px solid #2E7D32", borderLeft: "4px solid #4CAF50" };
+  // Amarillo = ganador correcto (+1)
+  if (pts === POINTS.WINNER) return { background: "#1A1500", border: "1px solid #F9A825", borderLeft: "4px solid #F2C116" };
+  // Rojo = fallaste (0)
+  if (hasPred)               return { background: "#1F0A0A", border: "1px solid #B71C1C", borderLeft: "4px solid #EF5350" };
   return { background: "#0D1424", border: "1px solid #1E2A45" };
 }
 
 function PtsChip({ pts }) {
   if (pts === null) return null;
+  // Verde = exacto
   if (pts === POINTS.EXACT)
-    return <span style={{ background: "#2A1E05", color: "#F2C116", fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 20 }}>+3</span>;
+    return <span style={{ background: "#1B5E20", color: "#A5D6A7", fontSize: 12, fontWeight: 800, padding: "3px 10px", borderRadius: 20 }}>+3 ✓</span>;
+  // Amarillo = ganador
   if (pts === POINTS.WINNER)
-    return <span style={{ background: "#0D1F0D", color: "#4CAF50", fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 20 }}>+1</span>;
-  return <span style={{ background: "#1F0D0D", color: "#EF5350", fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 20 }}>0</span>;
+    return <span style={{ background: "#F57F17", color: "#FFF9C4", fontSize: 12, fontWeight: 800, padding: "3px 10px", borderRadius: 20 }}>+1</span>;
+  // Rojo = fallaste
+  return <span style={{ background: "#B71C1C", color: "#FFCDD2", fontSize: 12, fontWeight: 800, padding: "3px 10px", borderRadius: 20 }}>✗ 0</span>;
 }
 
 function ScoreInput({ value, onChange, disabled }) {
