@@ -126,9 +126,11 @@ export function FixturePage({ user }) {
             const pred      = drafts[p.id] ?? predictions[p.id] ?? {};
             const res       = results[p.id];
             const hasPred   = pred.local != null && pred.visitante != null;
-            const pts       = res && hasPred ? calcPoints(pred, res) : null;
+            const pts        = res && hasPred ? calcPoints(pred, res) : null;
             const isFinished = !!res;
-            const cardStyle = getPartidoStyle(pts, hasPred, isFinished);
+            const isStarted  = Date.now() >= p.fechaSort;
+            const locked     = isFinished || isStarted;
+            const cardStyle  = getPartidoStyle(pts, hasPred, isFinished);
 
             return (
               <div key={p.id} style={{
@@ -155,6 +157,10 @@ export function FixturePage({ user }) {
                   <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", minWidth: 52, textAlign: "center" }}>
                     {res.local} : {res.visitante}
                   </div>
+                ) : locked ? (
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#3D5070", minWidth: 52, textAlign: "center" }}>
+                    — : —
+                  </div>
                 ) : (
                   <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
                     <ScoreInput value={pred.local}     onChange={(v) => handleScore(p.id, "local", v)}     disabled={false} />
@@ -173,9 +179,11 @@ export function FixturePage({ user }) {
                 <div style={{ minWidth: 36, textAlign: "right" }}>
                   {isFinished && hasPred
                     ? <PtsChip pts={pts} />
-                    : hasPred
-                      ? <span style={{ fontSize: 10, color: "#3D5070" }}>por jugar</span>
-                      : null
+                    : locked && hasPred
+                      ? <span style={{ fontSize: 10, color: "#F2C116" }}>🔒 en juego</span>
+                      : hasPred
+                        ? <span style={{ fontSize: 10, color: "#3D5070" }}>por jugar</span>
+                        : null
                   }
                 </div>
               </div>
