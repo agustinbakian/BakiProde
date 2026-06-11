@@ -7,13 +7,8 @@ import { LoginPage } from "./pages/LoginPage";
 import { FixturePage } from "./pages/FixturePage";
 import { EliminatoriasPage } from "./pages/EliminatoriasPage";
 import { RankingPage } from "./pages/RankingPage";
+import { AdminPage, isAdmin } from "./pages/AdminPage";
 import { SidebarRanking } from "./components/SidebarRanking";
-
-const TABS = [
-  { id: "fixture",      label: "Fixture" },
-  { id: "eliminatoria", label: "Eliminatorias" },
-  { id: "ranking",      label: "Ranking" },
-];
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -39,7 +34,7 @@ function StatsBar({ user }) {
 
   return (
     <div style={{
-      display: "grid", gridTemplateColumns: "repeat(2, 1fr)",
+      display: "grid", gridTemplateColumns: "repeat(2,1fr)",
       gap: 8, padding: "12px 16px",
       background: "#0D1424", borderBottom: "1px solid #1E2A45"
     }}>
@@ -71,7 +66,7 @@ function StatsBarDesktop({ user }) {
 
   return (
     <div style={{
-      display: "grid", gridTemplateColumns: "repeat(3, 1fr)",
+      display: "grid", gridTemplateColumns: "repeat(3,1fr)",
       gap: 8, padding: "14px 24px",
       background: "#0D1424", borderBottom: "1px solid #1E2A45"
     }}>
@@ -106,6 +101,15 @@ export default function App() {
   }
 
   if (!user) return <LoginPage />;
+
+  const admin = isAdmin(user);
+
+  const TABS = [
+    { id: "fixture",      label: "Fixture" },
+    { id: "eliminatoria", label: "Eliminatorias" },
+    { id: "ranking",      label: "Ranking" },
+    ...(admin ? [{ id: "admin", label: "⚙️ Admin" }] : []),
+  ];
 
   const padding = isMobile ? "12px 16px" : "12px 24px";
 
@@ -163,23 +167,25 @@ export default function App() {
 
       {/* Body */}
       {isMobile ? (
-        // Mobile: una columna, sin sidebar
         <div style={{ padding: "16px" }}>
           {tab === "fixture"      && <FixturePage       user={user} />}
           {tab === "eliminatoria" && <EliminatoriasPage user={user} />}
           {tab === "ranking"      && <RankingPage        user={user} />}
+          {tab === "admin"        && <AdminPage />}
         </div>
       ) : (
-        // Desktop: dos columnas con sidebar
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", maxWidth: 1200, margin: "0 auto" }}>
-          <div style={{ padding: "16px 20px", borderRight: "1px solid #1E2A45", minWidth: 0 }}>
+        <div style={{ display: "grid", gridTemplateColumns: tab === "admin" ? "1fr" : "1fr 280px", maxWidth: 1200, margin: "0 auto" }}>
+          <div style={{ padding: "16px 20px", borderRight: tab === "admin" ? "none" : "1px solid #1E2A45", minWidth: 0 }}>
             {tab === "fixture"      && <FixturePage       user={user} />}
             {tab === "eliminatoria" && <EliminatoriasPage user={user} />}
             {tab === "ranking"      && <RankingPage        user={user} />}
+            {tab === "admin"        && <AdminPage />}
           </div>
-          <div style={{ padding: 16 }}>
-            <SidebarRanking user={user} />
-          </div>
+          {tab !== "admin" && (
+            <div style={{ padding: 16 }}>
+              <SidebarRanking user={user} />
+            </div>
+          )}
         </div>
       )}
     </div>
