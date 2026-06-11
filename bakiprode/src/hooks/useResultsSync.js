@@ -1,10 +1,7 @@
 import { useEffect } from "react";
-import { FOOTBALL_DATA_API_KEY, WC_COMPETITION_ID } from "../lib/config";
 import { saveResult } from "../lib/db";
 import { PARTIDOS_GRUPOS } from "../lib/fixture";
 
-// Mapa de nombre normalizado → nombre en nuestro fixture
-// Ajustar si football-data.org usa nombres distintos
 const NAME_MAP = {
   "Morocco":          "Marruecos",
   "Ukraine":          "Ucrania",
@@ -22,7 +19,6 @@ const NAME_MAP = {
   "Belgium":          "Bélgica",
   "Italy":            "Italia",
   "Croatia":          "Croacia",
-  "Australia":        "Australia",
   "Turkey":           "Turquía",
   "New Zealand":      "Nueva Zelanda",
   "El Salvador":      "El Salvador",
@@ -54,13 +50,29 @@ const NAME_MAP = {
   "Cameroon":         "Camerún",
   "Costa Rica":       "Costa Rica",
   "Austria":          "Austria",
+  "Norway":           "Noruega",
+  "Sweden":           "Suecia",
+  "Tunisia":          "Túnez",
+  "Curacao":          "Curazao",
+  "Ivory Coast":      "Costa de Marfil",
+  "Cape Verde":       "Cabo Verde",
+  "Iraq":             "Iraq",
+  "Jordan":           "Jordania",
+  "DR Congo":         "RD del Congo",
+  "Panama":           "Panamá",
+  "Scotland":         "Escocia",
+  "Haiti":            "Haití",
+  "Australia":        "Australia",
+  "Qatar":            "Catar",
+  "Bosnia and Herzegovina": "Bosnia y Herzegovina",
+  "Czech Republic":   "República Checa",
+  "Czechia":          "República Checa",
 };
 
 function normalizeName(name) {
   return NAME_MAP[name] || name;
 }
 
-// Busca el partido en nuestro fixture por los nombres de los equipos
 function findPartidoId(homeTeam, awayTeam) {
   const local     = normalizeName(homeTeam);
   const visitante = normalizeName(awayTeam);
@@ -70,30 +82,29 @@ function findPartidoId(homeTeam, awayTeam) {
   return p?.id ?? null;
 }
 
-/**
- * Hook que sincroniza resultados finalizados desde football-data.org
- * Solo corre si hay API key configurada.
- * Se ejecuta una vez al montar y luego cada 5 minutos.
- */
 export function useResultsSync() {
   useEffect(() => {
-    if (!FOOTBALL_DATA_API_KEY || FOOTBALL_DATA_API_KEY === "TU_FOOTBALL_DATA_API_KEY") return;
-
     async function sync() {
       try {
-        const res = await fetch(
-          `https://api.football-data.org/v4/competitions/${WC_COMPETITION_ID}/matches?stage=GROUP_STAGE&status=FINISHED`,
-          { headers: { "X-Auth-Token": FOOTBALL_DATA_API_KEY } }
-        );
+        const res = await fetch("/api/resultados");
         if (!res.ok) return;
         const data = await res.json();
 
         for (const match of data.matches ?? []) {
+          // Bloquear partidos en curso o finalizados
+          if (!["IN_PLAY", "PAUSED", "FINISHED"].includes(match.status)) continue;
+          
           const id = findPartidoId(match.homeTeam.name, match.awayTeam.name);
           if (!id) continue;
+
           const { home, away } = match.score.fullTime;
-          if (home == null || away == null) continue;
-          await saveResult(id, home, away);
+          
+          // Para partidos en curso usar el score parcial
+          const scoreHome = home ?? match.score.halfTime?.home ?? 0;
+          const scoreAway = away ?? match.score.halfTime?.away ?? 0;
+          
+          if (scoreHome === null || scoreAway === null) continue;
+          await saveResult(id, scoreHome, scoreAway);
         }
       } catch (e) {
         console.error("[BakiProde] Error sincronizando resultados:", e);
@@ -101,7 +112,7 @@ export function useResultsSync() {
     }
 
     sync();
-    const interval = setInterval(sync, 5 * 60 * 1000); // cada 5 min
+    const interval = setInterval(sync, 3 * 60 * 1000); // cada 3 minutos
     return () => clearInterval(interval);
   }, []);
 }
