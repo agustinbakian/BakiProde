@@ -6,8 +6,7 @@ export default async function handler(req, res) {
 
   try {
     const response = await fetch(
-      "https://worldcupapi.com/api/matches",
-      { headers: { "Authorization": `Bearer ${API_KEY}` } }
+      `https://worldcupapi.com/api/history?key=${API_KEY}&date_from=2026-06-11&date_to=2026-07-19`
     );
     const data = await response.json();
     res.status(200).json(data);
