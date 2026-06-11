@@ -6,7 +6,7 @@ export default async function handler(req, res) {
 
   try {
     const response = await fetch(
-      "https://v3.football.api-sports.io/fixtures?league=1&season=2026&status=FT-AET-PEN",
+      "https://v3.football.api-sports.io/fixtures?league=1&season=2026",
       {
         headers: {
           "x-apisports-key": API_KEY
