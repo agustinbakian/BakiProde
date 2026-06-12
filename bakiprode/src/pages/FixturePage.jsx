@@ -131,59 +131,71 @@ export function FixturePage({ user }) {
               <div key={p.id} style={{
                 ...cardStyle,
                 borderRadius: 12, padding: "10px 14px",
-                marginBottom: 6, display: "flex", alignItems: "center", gap: 10,
+                marginBottom: 6,
               }}>
-                <div style={{ minWidth: 44, textAlign: "center" }}>
-                  <div style={{ fontSize: 11, color: "#5A7298" }}>{p.hora}</div>
-                  <div style={{
-                    fontSize: 10, background: "#1E2A45", color: "#F2C116",
-                    borderRadius: 20, padding: "1px 5px", fontWeight: 700, marginTop: 3, display: "inline-block",
-                  }}>G{p.grupo}</div>
-                </div>
-
-                <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, justifyContent: "flex-end", minWidth: 0 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "#E8EDF5", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {p.local}
-                  </span>
-                  <Flag country={p.local} size={22} />
-                </div>
-
-                {isFinished ? (
-                  <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", minWidth: 52, textAlign: "center" }}>
-                    {res.local} : {res.visitante}
+                {/* Fila principal */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ minWidth: 44, textAlign: "center" }}>
+                    <div style={{ fontSize: 11, color: "#5A7298" }}>{p.hora}</div>
+                    <div style={{
+                      fontSize: 10, background: "#1E2A45", color: "#F2C116",
+                      borderRadius: 20, padding: "1px 5px", fontWeight: 700, marginTop: 3, display: "inline-block",
+                    }}>G{p.grupo}</div>
                   </div>
-                ) : locked ? (
-                  <div style={{ fontSize: 15, fontWeight: 700, minWidth: 52, textAlign: "center", color: "#3D5070" }}>
-                    {hasPred
-                      ? <>{pred.local} <span style={{ fontSize: 11 }}>:</span> {pred.visitante}</>
-                      : "— : —"
+
+                  <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, justifyContent: "flex-end", minWidth: 0 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "#E8EDF5", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {p.local}
+                    </span>
+                    <Flag country={p.local} size={22} />
+                  </div>
+
+                  {isFinished ? (
+                    <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", minWidth: 52, textAlign: "center" }}>
+                      {res.local} : {res.visitante}
+                    </div>
+                  ) : locked ? (
+                    <div style={{ fontSize: 15, fontWeight: 700, minWidth: 52, textAlign: "center", color: "#3D5070" }}>
+                      {hasPred
+                        ? <>{pred.local} <span style={{ fontSize: 11 }}>:</span> {pred.visitante}</>
+                        : "— : —"
+                      }
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                      <ScoreInput value={pred.local}     onChange={(v) => handleScore(p.id, "local", v)}     disabled={false} />
+                      <span style={{ fontSize: 11, color: "#3D5070", fontWeight: 700 }}>:</span>
+                      <ScoreInput value={pred.visitante} onChange={(v) => handleScore(p.id, "visitante", v)} disabled={false} />
+                    </div>
+                  )}
+
+                  <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+                    <Flag country={p.visitante} size={22} />
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "#E8EDF5", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {p.visitante}
+                    </span>
+                  </div>
+
+                  <div style={{ minWidth: 36, textAlign: "right" }}>
+                    {isFinished && hasPred
+                      ? <PtsChip pts={pts} />
+                      : locked && hasPred
+                        ? <span style={{ fontSize: 10, color: "#F2C116" }}>🔒 en juego</span>
+                        : hasPred
+                          ? <span style={{ fontSize: 10, color: "#3D5070" }}>por jugar</span>
+                          : null
                     }
                   </div>
-                ) : (
-                  <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-                    <ScoreInput value={pred.local}     onChange={(v) => handleScore(p.id, "local", v)}     disabled={false} />
-                    <span style={{ fontSize: 11, color: "#3D5070", fontWeight: 700 }}>:</span>
-                    <ScoreInput value={pred.visitante} onChange={(v) => handleScore(p.id, "visitante", v)} disabled={false} />
+                </div>
+
+                {/* Pronóstico debajo del resultado finalizado */}
+                {isFinished && hasPred && (
+                  <div style={{ textAlign: "center", marginTop: 6 }}>
+                    <span style={{ fontSize: 11, color: "#3D5070" }}>
+                      tu pronóstico: <span style={{ color: "#5A7298", fontWeight: 700 }}>{pred.local} - {pred.visitante}</span>
+                    </span>
                   </div>
                 )}
-
-                <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
-                  <Flag country={p.visitante} size={22} />
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "#E8EDF5", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {p.visitante}
-                  </span>
-                </div>
-
-                <div style={{ minWidth: 36, textAlign: "right" }}>
-                  {isFinished && hasPred
-                    ? <PtsChip pts={pts} />
-                    : locked && hasPred
-                      ? <span style={{ fontSize: 10, color: "#F2C116" }}>🔒 en juego</span>
-                      : hasPred
-                        ? <span style={{ fontSize: 10, color: "#3D5070" }}>por jugar</span>
-                        : null
-                  }
-                </div>
               </div>
             );
           })}
