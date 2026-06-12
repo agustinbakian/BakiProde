@@ -14,24 +14,18 @@ function getPartidoStyle(pts, hasPred, isFinished) {
       borderLeft: hasPred ? "3px solid #F2C116" : "1px solid #1E2A45",
     };
   }
-  // Verde = exacto (+3)
   if (pts === POINTS.EXACT)  return { background: "#0A1F0A", border: "1px solid #2E7D32", borderLeft: "4px solid #4CAF50" };
-  // Amarillo = ganador correcto (+1)
   if (pts === POINTS.WINNER) return { background: "#1A1500", border: "1px solid #F9A825", borderLeft: "4px solid #F2C116" };
-  // Rojo = fallaste (0)
   if (hasPred)               return { background: "#1F0A0A", border: "1px solid #B71C1C", borderLeft: "4px solid #EF5350" };
   return { background: "#0D1424", border: "1px solid #1E2A45" };
 }
 
 function PtsChip({ pts }) {
   if (pts === null) return null;
-  // Verde = exacto
   if (pts === POINTS.EXACT)
     return <span style={{ background: "#1B5E20", color: "#A5D6A7", fontSize: 12, fontWeight: 800, padding: "3px 10px", borderRadius: 20 }}>+3 ✓</span>;
-  // Amarillo = ganador
   if (pts === POINTS.WINNER)
     return <span style={{ background: "#F57F17", color: "#FFF9C4", fontSize: 12, fontWeight: 800, padding: "3px 10px", borderRadius: 20 }}>+1</span>;
-  // Rojo = fallaste
   return <span style={{ background: "#B71C1C", color: "#FFCDD2", fontSize: 12, fontWeight: 800, padding: "3px 10px", borderRadius: 20 }}>✗ 0</span>;
 }
 
@@ -159,8 +153,11 @@ export function FixturePage({ user }) {
                     {res.local} : {res.visitante}
                   </div>
                 ) : locked ? (
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "#3D5070", minWidth: 52, textAlign: "center" }}>
-                    — : —
+                  <div style={{ fontSize: 15, fontWeight: 700, minWidth: 52, textAlign: "center", color: "#3D5070" }}>
+                    {hasPred
+                      ? <>{pred.local} <span style={{ fontSize: 11 }}>:</span> {pred.visitante}</>
+                      : "— : —"
+                    }
                   </div>
                 ) : (
                   <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
