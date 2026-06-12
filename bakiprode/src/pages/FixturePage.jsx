@@ -128,7 +128,8 @@ export function FixturePage({ user }) {
             const hasPred   = pred.local != null && pred.visitante != null;
             const pts        = res && hasPred ? calcPoints(pred, res) : null;
             const isFinished = !!res;
-            const isStarted  = Date.now() >= (p.fechaSort + 3 * 60 * 60 * 1000);
+            const partidoDate = new Date(`${p.fechaISO}T${p.hora}:00-03:00`);
+            const isStarted  = Date.now() >= partidoDate.getTime();
             const locked     = isFinished || isStarted;
             const cardStyle  = getPartidoStyle(pts, hasPred, isFinished);
 
