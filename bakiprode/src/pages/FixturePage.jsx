@@ -190,7 +190,7 @@ export function FixturePage({ user }) {
 
                 {/* Pronóstico debajo del resultado finalizado */}
                 {(isFinished || isStarted) && hasPred && (
-                  <div style={{ textAlign: "center", marginTop: 6 }}>
+                  <div style={{ textAlign: "center", marginTop: 2 }}>
                     <span style={{ fontSize: 11, color: "#3D5070" }}>
                       tu pronóstico: <span style={{ color: "#5A7298", fontWeight: 700 }}>{pred.local} - {pred.visitante}</span>
                     </span>
