@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { subscribeToResults, saveResult } from "../lib/db";
+import { doc, setDoc, getFirestore } from "firebase/firestore";
 import { PARTIDOS_GRUPOS, BRACKET_ELIM } from "../lib/fixture";
 
 export const ADMIN_EMAILS = [
@@ -10,15 +11,23 @@ export function isAdmin(user) {
   return user && ADMIN_EMAILS.includes(user.email);
 }
 
+const db = getFirestore();
+
+async function saveWinner(partidoId, ganador) {
+  const ref = doc(db, "results", "oficial");
+  await setDoc(ref, { [partidoId]: { ganador } }, { merge: true });
+}
+
 function PartidoRow({ partido, result, esElim }) {
   const [localVal,     setLocalVal]     = useState(result?.local     ?? "");
   const [visitanteVal, setVisitanteVal] = useState(result?.visitante ?? "");
   const [saving,       setSaving]       = useState(false);
   const [saved,        setSaved]        = useState(false);
+  const [savingWinner, setSavingWinner] = useState(false);
 
   useEffect(() => {
     if (result) {
-      setLocalVal(result.local ?? "");
+      setLocalVal(result.local     ?? "");
       setVisitanteVal(result.visitante ?? "");
     }
   }, [result]);
@@ -29,10 +38,34 @@ function PartidoRow({ partido, result, esElim }) {
     if (isNaN(l) || isNaN(v)) return;
     setSaving(true);
     await saveResult(partido.id, l, v);
+    // Si hay ganador claro, lo guardamos automáticamente
+    if (esElim && l !== v) {
+      const ganadorAuto = partido.equipos
+        ? (l > v ? partido.equipos[0] : partido.equipos[1])
+        : null;
+      if (ganadorAuto) await saveWinner(partido.id, ganadorAuto);
+    }
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
+
+  async function handleWinner(equipo) {
+    setSavingWinner(true);
+    await saveWinner(partido.id, equipo);
+    setSavingWinner(false);
+  }
+
+  const l = parseInt(localVal);
+  const v = parseInt(visitanteVal);
+  const hayResultado = !isNaN(l) && !isNaN(v) && result;
+  const esEmpate = hayResultado && l === v;
+  const ganadorActual = result?.ganador ?? null;
+
+  // Para eliminatorias con empate necesitamos saber los equipos
+  // Los pasamos desde afuera via partido.equipos
+  const equipoLocal     = esElim ? (partido.equipos?.[0] ?? "Local")     : partido.local;
+  const equipoVisitante = esElim ? (partido.equipos?.[1] ?? "Visitante") : partido.visitante;
 
   return (
     <div style={{
@@ -42,82 +75,105 @@ function PartidoRow({ partido, result, esElim }) {
       borderRadius: "0 10px 10px 0",
       padding: "10px 14px",
       marginBottom: 6,
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
     }}>
-      <div style={{ minWidth: 70, fontSize: 11, color: "#5A7298" }}>
-        <div>{partido.fecha}</div>
-        {esElim ? (
-          <div style={{ color: "#F2C116", fontWeight: 700, fontSize: 10 }}>{partido.id}</div>
-        ) : (
-          <div style={{ color: "#F2C116", fontWeight: 700 }}>{partido.hora} · G{partido.grupo}</div>
-        )}
-      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ minWidth: 70, fontSize: 11, color: "#5A7298" }}>
+          <div>{partido.fecha}</div>
+          {esElim ? (
+            <div style={{ color: "#F2C116", fontWeight: 700, fontSize: 10 }}>{partido.id}</div>
+          ) : (
+            <div style={{ color: "#F2C116", fontWeight: 700 }}>{partido.hora} · G{partido.grupo}</div>
+          )}
+        </div>
 
-      <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-        {esElim ? (
-          <span style={{ flex: 1, fontSize: 12, color: "#5A7298", fontStyle: "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {partido.label}
-          </span>
-        ) : (
-          <>
+        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+          {esElim ? (
+            <span style={{ flex: 1, fontSize: 12, color: "#5A7298", fontStyle: "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {partido.label}
+            </span>
+          ) : (
             <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: "#E8EDF5", textAlign: "right", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {partido.local}
             </span>
-          </>
-        )}
+          )}
 
-        <input
-          type="number" min="0" max="20"
-          value={localVal}
-          onChange={(e) => setLocalVal(e.target.value)}
-          style={{
-            width: 38, height: 38, textAlign: "center", fontSize: 16, fontWeight: 700,
-            border: "1px solid #1E2A45", borderRadius: 8,
-            background: "#0A0F1E", color: "#fff", outline: "none",
-            flexShrink: 0,
-          }}
-        />
-        <span style={{ fontSize: 11, color: "#3D5070", fontWeight: 700 }}>:</span>
-        <input
-          type="number" min="0" max="20"
-          value={visitanteVal}
-          onChange={(e) => setVisitanteVal(e.target.value)}
-          style={{
-            width: 38, height: 38, textAlign: "center", fontSize: 16, fontWeight: 700,
-            border: "1px solid #1E2A45", borderRadius: 8,
-            background: "#0A0F1E", color: "#fff", outline: "none",
-            flexShrink: 0,
-          }}
-        />
+          <input
+            type="number" min="0" max="20"
+            value={localVal}
+            onChange={(e) => setLocalVal(e.target.value)}
+            style={{
+              width: 38, height: 38, textAlign: "center", fontSize: 16, fontWeight: 700,
+              border: "1px solid #1E2A45", borderRadius: 8,
+              background: "#0A0F1E", color: "#fff", outline: "none", flexShrink: 0,
+            }}
+          />
+          <span style={{ fontSize: 11, color: "#3D5070", fontWeight: 700 }}>:</span>
+          <input
+            type="number" min="0" max="20"
+            value={visitanteVal}
+            onChange={(e) => setVisitanteVal(e.target.value)}
+            style={{
+              width: 38, height: 38, textAlign: "center", fontSize: 16, fontWeight: 700,
+              border: "1px solid #1E2A45", borderRadius: 8,
+              background: "#0A0F1E", color: "#fff", outline: "none", flexShrink: 0,
+            }}
+          />
 
-        {!esElim && (
-          <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: "#E8EDF5", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {partido.visitante}
-          </span>
-        )}
+          {!esElim && (
+            <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: "#E8EDF5", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {partido.visitante}
+            </span>
+          )}
+        </div>
+
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          style={{
+            padding: "6px 14px", fontSize: 12, fontWeight: 700, borderRadius: 8,
+            background: saved ? "#2E7D32" : "#F2C116",
+            color: saved ? "#fff" : "#0A0F1E",
+            border: "none", cursor: "pointer", flexShrink: 0,
+            opacity: saving ? 0.6 : 1, minWidth: 70,
+          }}
+        >
+          {saving ? "..." : saved ? "✓ Guardado" : "Guardar"}
+        </button>
       </div>
 
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        style={{
-          padding: "6px 14px", fontSize: 12, fontWeight: 700, borderRadius: 8,
-          background: saved ? "#2E7D32" : "#F2C116",
-          color: saved ? "#fff" : "#0A0F1E",
-          border: "none", cursor: "pointer", flexShrink: 0,
-          opacity: saving ? 0.6 : 1,
-          minWidth: 70,
-        }}
-      >
-        {saving ? "..." : saved ? "✓ Guardado" : "Guardar"}
-      </button>
+      {/* Selector de ganador — solo en eliminatorias con empate */}
+      {esElim && hayResultado && esEmpate && (
+        <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #1E2A45", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 11, color: "#5A7298", fontWeight: 600 }}>Ganador (penales):</span>
+          {[equipoLocal, equipoVisitante].map((eq) => (
+            <button
+              key={eq}
+              onClick={() => handleWinner(eq)}
+              disabled={savingWinner}
+              style={{
+                padding: "4px 12px", fontSize: 12, fontWeight: 700, borderRadius: 20,
+                background: ganadorActual === eq ? "#F2C116" : "transparent",
+                color: ganadorActual === eq ? "#0A0F1E" : "#5A7298",
+                border: `1px solid ${ganadorActual === eq ? "#F2C116" : "#1E2A45"}`,
+                cursor: "pointer",
+              }}
+            >
+              {ganadorActual === eq ? "✓ " : ""}{eq}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Ganador automático — empate resuelto o ganador claro */}
+      {esElim && result?.ganador && !esEmpate && (
+        <div style={{ marginTop: 6, fontSize: 11, color: "#4CAF50" }}>
+          ✓ Ganador: <strong>{result.ganador}</strong>
+        </div>
+      )}
     </div>
   );
 }
 
-// Aplanar todos los partidos eliminatorios en una sola lista
 const PARTIDOS_ELIM = BRACKET_ELIM.flatMap((fase) =>
   fase.partidos.map((p) => ({ ...p, fase: fase.fase, ronda: fase.ronda }))
 );
@@ -126,7 +182,7 @@ export function AdminPage() {
   const [results, setResults] = useState({});
   const [filtro,  setFiltro]  = useState("pendientes");
   const [search,  setSearch]  = useState("");
-  const [fase,    setFase]    = useState("grupos"); // "grupos" | "elim"
+  const [fase,    setFase]    = useState("grupos");
 
   useEffect(() => {
     return subscribeToResults(setResults);
@@ -157,7 +213,6 @@ export function AdminPage() {
           Panel de Admin
         </div>
 
-        {/* Selector Grupos / Eliminatorias */}
         <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
           {[
             { id: "grupos", label: "⚽ Grupos" },
@@ -173,7 +228,6 @@ export function AdminPage() {
           ))}
         </div>
 
-        {/* Contadores */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 16 }}>
           {[
             { label: "Pendientes", value: pendientes, color: "#EF5350" },
@@ -187,7 +241,6 @@ export function AdminPage() {
           ))}
         </div>
 
-        {/* Filtros */}
         <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
           {[
             { id: "pendientes", label: "Pendientes" },
@@ -216,7 +269,6 @@ export function AdminPage() {
         </div>
       </div>
 
-      {/* Separador por fase en eliminatorias */}
       {esElim ? (
         BRACKET_ELIM.map((faseObj) => {
           const partidosFase = faseObj.partidos.filter((p) => {
@@ -235,8 +287,7 @@ export function AdminPage() {
               <div style={{
                 fontSize: 11, fontWeight: 700, color: "#5A7298",
                 textTransform: "uppercase", letterSpacing: "1px",
-                padding: "10px 0 6px", borderBottom: "1px solid #1E2A45",
-                marginBottom: 8,
+                padding: "10px 0 6px", borderBottom: "1px solid #1E2A45", marginBottom: 8,
               }}>
                 {faseObj.fase}
               </div>
