@@ -145,74 +145,80 @@ export const PARTIDOS_GRUPOS = [
   { id:72, grupo:"J", local:"Jordania",            visitante:"Argentina",            fecha:"sáb, 27 jun", hora:"23:00", fechaISO:"2026-06-27", fechaSort:1751050800000 },
 ];
  
+// ─────────────────────────────────────────────────────────────────────────────
+//  BRACKET_ELIM — Fase eliminatoria Mundial 2026
+//  Horarios en hora de Buenos Aires (UTC-3)
+//  fechaISO = fecha en Buenos Aires
+//  fechaSort = timestamp UTC del inicio del partido
+// ─────────────────────────────────────────────────────────────────────────────
+
 export const BRACKET_ELIM = [
   {
     fase: "Dieciseisavos de final",
     ronda: "R32",
     partidos: [
-      { id:"P73",  label:"2º A vs 2º B",          fecha:"dom, 28 jun" },
-      { id:"P74",  label:"1º E vs 3º A/B/C/D/F",  fecha:"lun, 29 jun" },
-      { id:"P75",  label:"1º F vs 2º C",          fecha:"lun, 29 jun" },
-      { id:"P76",  label:"1º C vs 2º F",          fecha:"lun, 29 jun" },
-      { id:"P77",  label:"1º I vs 3º C/D/F/G/H",  fecha:"mar, 30 jun" },
-      { id:"P78",  label:"2º E vs 2º I",          fecha:"mar, 30 jun" },
-      { id:"P79",  label:"1º A vs 3º C/E/F/H/I",  fecha:"mar, 30 jun" },
-      { id:"P80",  label:"1º L vs 3º E/H/I/J/K",  fecha:"mié, 1 jul"  },
-      { id:"P81",  label:"1º D vs 3º B/E/F/I/J",  fecha:"mié, 1 jul"  },
-      { id:"P82",  label:"1º G vs 3º A/E/H/I/J",  fecha:"mié, 1 jul"  },
-      { id:"P83",  label:"2º K vs 2º L",          fecha:"jue, 2 jul"  },
-      { id:"P84",  label:"1º H vs 2º J",          fecha:"jue, 2 jul"  },
-      { id:"P85",  label:"1º B vs 3º E/F/G/I/J",  fecha:"jue, 2 jul"  },
-      { id:"P86",  label:"1º J vs 2º H",          fecha:"vie, 3 jul"  },
-      { id:"P87",  label:"1º K vs 3º D/E/I/J/L",  fecha:"vie, 3 jul"  },
-      { id:"P88",  label:"2º D vs 2º G",          fecha:"vie, 3 jul"  },
+      { id:"P73",  label:"2º A vs 2º B",          fecha:"dom, 28 jun", hora:"16:00", fechaISO:"2026-06-28", fechaSort:1782673200000 }, // 3pm ET - Los Ángeles
+      { id:"P74",  label:"1º E vs 3º A/B/C/D/F",  fecha:"lun, 29 jun", hora:"17:30", fechaISO:"2026-06-29", fechaSort:1782765000000 }, // 4:30pm ET - Boston
+      { id:"P75",  label:"1º F vs 2º C",          fecha:"lun, 29 jun", hora:"14:00", fechaISO:"2026-06-29", fechaSort:1782752400000 }, // 1pm ET - Houston
+      { id:"P76",  label:"1º C vs 2º F",          fecha:"lun, 29 jun", hora:"23:00", fechaISO:"2026-06-29", fechaSort:1782784800000 }, // 9pm CST - Monterrey
+      { id:"P77",  label:"1º I vs 3º C/D/F/G/H",  fecha:"mar, 30 jun", hora:"18:00", fechaISO:"2026-06-30", fechaSort:1782853200000 }, // 5pm ET - NJ
+      { id:"P78",  label:"2º E vs 2º I",          fecha:"mar, 30 jun", hora:"14:00", fechaISO:"2026-06-30", fechaSort:1782838800000 }, // 1pm ET - Dallas
+      { id:"P79",  label:"1º A vs 3º C/E/F/H/I",  fecha:"mar, 30 jun", hora:"23:00", fechaISO:"2026-06-30", fechaSort:1782871200000 }, // 9pm CST - Mexico City
+      { id:"P80",  label:"1º L vs 3º E/H/I/J/K",  fecha:"mié, 1 jul",  hora:"13:00", fechaISO:"2026-07-01", fechaSort:1782921600000 }, // 12pm ET - Atlanta
+      { id:"P81",  label:"1º D vs 3º B/E/F/I/J",  fecha:"mié, 1 jul",  hora:"00:00", fechaISO:"2026-07-02", fechaSort:1782961200000 }, // 5pm PT - Santa Clara (pasa a madrugada BA)
+      { id:"P82",  label:"1º G vs 3º A/E/H/I/J",  fecha:"mié, 1 jul",  hora:"20:00", fechaISO:"2026-07-01", fechaSort:1782946800000 }, // 1pm PT - Seattle
+      { id:"P83",  label:"2º K vs 2º L",          fecha:"jue, 2 jul",  hora:"20:00", fechaISO:"2026-07-02", fechaSort:1783033200000 }, // 7pm ET - Toronto
+      { id:"P84",  label:"1º H vs 2º J",          fecha:"jue, 2 jul",  hora:"19:00", fechaISO:"2026-07-02", fechaSort:1783029600000 }, // 12pm PT - Los Ángeles
+      { id:"P85",  label:"1º B vs 3º E/F/G/I/J",  fecha:"jue, 2 jul",  hora:"03:00", fechaISO:"2026-07-03", fechaSort:1783058400000 }, // 8pm PT - Vancouver (madrugada BA)
+      { id:"P86",  label:"1º J vs 2º H",          fecha:"vie, 3 jul",  hora:"19:00", fechaISO:"2026-07-03", fechaSort:1783116000000 }, // 6pm ET - Miami
+      { id:"P87",  label:"1º K vs 3º D/E/I/J/L",  fecha:"vie, 3 jul",  hora:"23:30", fechaISO:"2026-07-03", fechaSort:1783132200000 }, // 9:30pm CDT - Kansas City
+      { id:"P88",  label:"2º D vs 2º G",          fecha:"vie, 3 jul",  hora:"15:00", fechaISO:"2026-07-03", fechaSort:1783101600000 }, // 2pm ET - Dallas
     ],
   },
   {
     fase: "Octavos de final",
     ronda: "R16",
     partidos: [
-      { id:"P89",  label:"Gan. P74 vs Gan. P77",  fecha:"sáb, 4 jul"  },
-      { id:"P90",  label:"Gan. P73 vs Gan. P75",  fecha:"sáb, 4 jul"  },
-      { id:"P91",  label:"Gan. P76 vs Gan. P78",  fecha:"dom, 5 jul"  },
-      { id:"P92",  label:"Gan. P79 vs Gan. P80",  fecha:"dom, 5 jul"  },
-      { id:"P93",  label:"Gan. P83 vs Gan. P84",  fecha:"lun, 6 jul"  },
-      { id:"P94",  label:"Gan. P81 vs Gan. P82",  fecha:"lun, 6 jul"  },
-      { id:"P95",  label:"Gan. P86 vs Gan. P88",  fecha:"mar, 7 jul"  },
-      { id:"P96",  label:"Gan. P85 vs Gan. P87",  fecha:"mar, 7 jul"  },
+      { id:"P89",  label:"Gan. P74 vs Gan. P77",  fecha:"sáb, 4 jul",  hora:"15:00", fechaISO:"2026-07-04", fechaSort:1783188000000 }, // 1pm CDT - Houston
+      { id:"P90",  label:"Gan. P73 vs Gan. P75",  fecha:"sáb, 4 jul",  hora:"18:00", fechaISO:"2026-07-04", fechaSort:1783198800000 }, // 5pm ET - Philadelphia
+      { id:"P91",  label:"Gan. P76 vs Gan. P78",  fecha:"dom, 5 jul",  hora:"17:00", fechaISO:"2026-07-05", fechaSort:1783281600000 }, // 4pm ET - NJ
+      { id:"P92",  label:"Gan. P79 vs Gan. P80",  fecha:"dom, 5 jul",  hora:"22:00", fechaISO:"2026-07-05", fechaSort:1783299600000 }, // 8pm CST - Mexico City
+      { id:"P93",  label:"Gan. P83 vs Gan. P84",  fecha:"lun, 6 jul",  hora:"16:00", fechaISO:"2026-07-06", fechaSort:1783364400000 }, // 3pm ET - Dallas
+      { id:"P94",  label:"Gan. P81 vs Gan. P82",  fecha:"lun, 6 jul",  hora:"21:00", fechaISO:"2026-07-06", fechaSort:1783382400000 }, // 2pm PT - Seattle
+      { id:"P95",  label:"Gan. P86 vs Gan. P88",  fecha:"mar, 7 jul",  hora:"13:00", fechaISO:"2026-07-07", fechaSort:1783440000000 }, // 12pm ET - Atlanta
+      { id:"P96",  label:"Gan. P85 vs Gan. P87",  fecha:"mar, 7 jul",  hora:"20:00", fechaISO:"2026-07-07", fechaSort:1783465200000 }, // 1pm PT - Vancouver
     ],
   },
   {
     fase: "Cuartos de final",
     ronda: "QF",
     partidos: [
-      { id:"P97",  label:"Gan. P89 vs Gan. P90",  fecha:"jue, 9 jul"  },
-      { id:"P98",  label:"Gan. P93 vs Gan. P94",  fecha:"vie, 10 jul" },
-      { id:"P99",  label:"Gan. P91 vs Gan. P92",  fecha:"sáb, 11 jul" },
-      { id:"P100", label:"Gan. P95 vs Gan. P96",  fecha:"sáb, 11 jul" },
+      { id:"P97",  label:"Gan. P89 vs Gan. P90",  fecha:"jue, 9 jul",  hora:"17:00", fechaISO:"2026-07-09", fechaSort:1783627200000 }, // 4pm ET - Boston
+      { id:"P98",  label:"Gan. P93 vs Gan. P94",  fecha:"vie, 10 jul", hora:"19:00", fechaISO:"2026-07-10", fechaSort:1783720800000 }, // 12pm PT - LA
+      { id:"P99",  label:"Gan. P91 vs Gan. P92",  fecha:"sáb, 11 jul", hora:"18:00", fechaISO:"2026-07-11", fechaSort:1783803600000 }, // 5pm ET - Miami
+      { id:"P100", label:"Gan. P95 vs Gan. P96",  fecha:"sáb, 11 jul", hora:"23:00", fechaISO:"2026-07-11", fechaSort:1783821600000 }, // 9pm CDT - Kansas City
     ],
   },
   {
     fase: "Semifinales",
     ronda: "SF",
     partidos: [
-      { id:"P101", label:"Gan. P97 vs Gan. P98",  fecha:"mar, 14 jul" },
-      { id:"P102", label:"Gan. P99 vs Gan. P100", fecha:"mié, 15 jul" },
+      { id:"P101", label:"Gan. P97 vs Gan. P98",  fecha:"mar, 14 jul", hora:"17:00", fechaISO:"2026-07-14", fechaSort:1784059200000 }, // 3pm CDT - Dallas
+      { id:"P102", label:"Gan. P99 vs Gan. P100", fecha:"mié, 15 jul", hora:"16:00", fechaISO:"2026-07-15", fechaSort:1784142000000 }, // 3pm ET - Atlanta
     ],
   },
   {
     fase: "Tercer puesto",
     ronda: "3P",
     partidos: [
-      { id:"P103", label:"Per. P101 vs Per. P102 — Miami", fecha:"sáb, 18 jul" },
+      { id:"P103", label:"Per. P101 vs Per. P102", fecha:"sáb, 18 jul", hora:"18:00", fechaISO:"2026-07-18", fechaSort:1784408400000 }, // 5pm ET - Miami
     ],
   },
   {
     fase: "Final",
     ronda: "F",
     partidos: [
-      { id:"P104", label:"Gan. P101 vs Gan. P102 — MetLife Stadium, Nueva York", fecha:"dom, 19 jul" },
+      { id:"P104", label:"Gan. P101 vs Gan. P102", fecha:"dom, 19 jul", hora:"16:00", fechaISO:"2026-07-19", fechaSort:1784487600000 }, // 3pm ET - NJ
     ],
   },
 ];
- 
