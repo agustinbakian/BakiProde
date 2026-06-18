@@ -1,17 +1,16 @@
 import { useState, useEffect } from "react";
 import { subscribeToResults, saveResult } from "../lib/db";
-import { PARTIDOS_GRUPOS } from "../lib/fixture";
+import { PARTIDOS_GRUPOS, BRACKET_ELIM } from "../lib/fixture";
 
 export const ADMIN_EMAILS = [
   "agustin@bakian.io",
-  // Agregar más admins acá
 ];
 
 export function isAdmin(user) {
   return user && ADMIN_EMAILS.includes(user.email);
 }
 
-function PartidoRow({ partido, result }) {
+function PartidoRow({ partido, result, esElim }) {
   const [localVal,     setLocalVal]     = useState(result?.local     ?? "");
   const [visitanteVal, setVisitanteVal] = useState(result?.visitante ?? "");
   const [saving,       setSaving]       = useState(false);
@@ -49,13 +48,26 @@ function PartidoRow({ partido, result }) {
     }}>
       <div style={{ minWidth: 70, fontSize: 11, color: "#5A7298" }}>
         <div>{partido.fecha}</div>
-        <div style={{ color: "#F2C116", fontWeight: 700 }}>{partido.hora} · G{partido.grupo}</div>
+        {esElim ? (
+          <div style={{ color: "#F2C116", fontWeight: 700, fontSize: 10 }}>{partido.id}</div>
+        ) : (
+          <div style={{ color: "#F2C116", fontWeight: 700 }}>{partido.hora} · G{partido.grupo}</div>
+        )}
       </div>
 
       <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-        <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: "#E8EDF5", textAlign: "right", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          {partido.local}
-        </span>
+        {esElim ? (
+          <span style={{ flex: 1, fontSize: 12, color: "#5A7298", fontStyle: "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {partido.label}
+          </span>
+        ) : (
+          <>
+            <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: "#E8EDF5", textAlign: "right", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {partido.local}
+            </span>
+          </>
+        )}
+
         <input
           type="number" min="0" max="20"
           value={localVal}
@@ -64,6 +76,7 @@ function PartidoRow({ partido, result }) {
             width: 38, height: 38, textAlign: "center", fontSize: 16, fontWeight: 700,
             border: "1px solid #1E2A45", borderRadius: 8,
             background: "#0A0F1E", color: "#fff", outline: "none",
+            flexShrink: 0,
           }}
         />
         <span style={{ fontSize: 11, color: "#3D5070", fontWeight: 700 }}>:</span>
@@ -75,11 +88,15 @@ function PartidoRow({ partido, result }) {
             width: 38, height: 38, textAlign: "center", fontSize: 16, fontWeight: 700,
             border: "1px solid #1E2A45", borderRadius: 8,
             background: "#0A0F1E", color: "#fff", outline: "none",
+            flexShrink: 0,
           }}
         />
-        <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: "#E8EDF5", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          {partido.visitante}
-        </span>
+
+        {!esElim && (
+          <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: "#E8EDF5", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {partido.visitante}
+          </span>
+        )}
       </div>
 
       <button
@@ -100,28 +117,38 @@ function PartidoRow({ partido, result }) {
   );
 }
 
+// Aplanar todos los partidos eliminatorios en una sola lista
+const PARTIDOS_ELIM = BRACKET_ELIM.flatMap((fase) =>
+  fase.partidos.map((p) => ({ ...p, fase: fase.fase, ronda: fase.ronda }))
+);
+
 export function AdminPage() {
   const [results, setResults] = useState({});
   const [filtro,  setFiltro]  = useState("pendientes");
   const [search,  setSearch]  = useState("");
+  const [fase,    setFase]    = useState("grupos"); // "grupos" | "elim"
 
   useEffect(() => {
     return subscribeToResults(setResults);
   }, []);
 
-  const filtered = PARTIDOS_GRUPOS.filter((p) => {
+  const partidosBase = fase === "grupos" ? PARTIDOS_GRUPOS : PARTIDOS_ELIM;
+  const esElim = fase === "elim";
+
+  const filtered = partidosBase.filter((p) => {
     const tieneResultado = !!results[p.id];
     if (filtro === "pendientes" && tieneResultado)  return false;
     if (filtro === "cargados"   && !tieneResultado) return false;
     if (search) {
       const q = search.toLowerCase();
+      if (esElim) return p.label.toLowerCase().includes(q) || p.id.toLowerCase().includes(q);
       return p.local.toLowerCase().includes(q) || p.visitante.toLowerCase().includes(q);
     }
     return true;
   });
 
-  const pendientes = PARTIDOS_GRUPOS.filter((p) => !results[p.id]).length;
-  const cargados   = PARTIDOS_GRUPOS.filter((p) =>  results[p.id]).length;
+  const pendientes = partidosBase.filter((p) => !results[p.id]).length;
+  const cargados   = partidosBase.filter((p) =>  results[p.id]).length;
 
   return (
     <div>
@@ -130,11 +157,28 @@ export function AdminPage() {
           Panel de Admin
         </div>
 
+        {/* Selector Grupos / Eliminatorias */}
+        <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+          {[
+            { id: "grupos", label: "⚽ Grupos" },
+            { id: "elim",   label: "🏆 Eliminatorias" },
+          ].map(({ id, label }) => (
+            <button key={id} onClick={() => { setFase(id); setFiltro("pendientes"); setSearch(""); }} style={{
+              padding: "6px 16px", fontSize: 13, borderRadius: 20, cursor: "pointer",
+              background: fase === id ? "#F2C116" : "transparent",
+              color: fase === id ? "#0A0F1E" : "#5A7298",
+              border: `1px solid ${fase === id ? "#F2C116" : "#1E2A45"}`,
+              fontWeight: fase === id ? 700 : 500,
+            }}>{label}</button>
+          ))}
+        </div>
+
+        {/* Contadores */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 16 }}>
           {[
             { label: "Pendientes", value: pendientes, color: "#EF5350" },
             { label: "Cargados",   value: cargados,   color: "#4CAF50" },
-            { label: "Total",      value: PARTIDOS_GRUPOS.length, color: "#F2C116" },
+            { label: "Total",      value: partidosBase.length, color: "#F2C116" },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ background: "#111827", border: "1px solid #1E2A45", borderRadius: 8, padding: "10px 12px" }}>
               <div style={{ fontSize: 10, color: "#5A7298", textTransform: "uppercase", letterSpacing: ".5px", fontWeight: 600, marginBottom: 3 }}>{label}</div>
@@ -143,6 +187,7 @@ export function AdminPage() {
           ))}
         </div>
 
+        {/* Filtros */}
         <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
           {[
             { id: "pendientes", label: "Pendientes" },
@@ -159,7 +204,7 @@ export function AdminPage() {
           ))}
           <input
             type="text"
-            placeholder="Buscar equipo..."
+            placeholder={esElim ? "Buscar partido..." : "Buscar equipo..."}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{
@@ -171,15 +216,48 @@ export function AdminPage() {
         </div>
       </div>
 
-      {filtered.length === 0 && (
-        <div style={{ textAlign: "center", padding: "2rem", color: "#3D5070", fontSize: 14 }}>
-          No hay partidos para mostrar.
-        </div>
+      {/* Separador por fase en eliminatorias */}
+      {esElim ? (
+        BRACKET_ELIM.map((faseObj) => {
+          const partidosFase = faseObj.partidos.filter((p) => {
+            const tieneResultado = !!results[p.id];
+            if (filtro === "pendientes" && tieneResultado)  return false;
+            if (filtro === "cargados"   && !tieneResultado) return false;
+            if (search) {
+              const q = search.toLowerCase();
+              return p.label.toLowerCase().includes(q) || p.id.toLowerCase().includes(q);
+            }
+            return true;
+          });
+          if (partidosFase.length === 0) return null;
+          return (
+            <div key={faseObj.ronda}>
+              <div style={{
+                fontSize: 11, fontWeight: 700, color: "#5A7298",
+                textTransform: "uppercase", letterSpacing: "1px",
+                padding: "10px 0 6px", borderBottom: "1px solid #1E2A45",
+                marginBottom: 8,
+              }}>
+                {faseObj.fase}
+              </div>
+              {partidosFase.map((p) => (
+                <PartidoRow key={p.id} partido={p} result={results[p.id]} esElim={true} />
+              ))}
+            </div>
+          );
+        })
+      ) : (
+        <>
+          {filtered.length === 0 && (
+            <div style={{ textAlign: "center", padding: "2rem", color: "#3D5070", fontSize: 14 }}>
+              No hay partidos para mostrar.
+            </div>
+          )}
+          {filtered.map((p) => (
+            <PartidoRow key={p.id} partido={p} result={results[p.id]} esElim={false} />
+          ))}
+        </>
       )}
-
-      {filtered.map((p) => (
-        <PartidoRow key={p.id} partido={p} result={results[p.id]} />
-      ))}
     </div>
   );
 }
