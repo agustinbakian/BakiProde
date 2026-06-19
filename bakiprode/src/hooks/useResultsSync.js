@@ -57,7 +57,7 @@ export function useResultsSync() {
           if (!competition) continue;
 
           const state = competition.status?.type?.state;
-          if (!["in", "post"].includes(state)) continue;
+          if (state !== "post") continue;
 
           const competitors = competition.competitors ?? [];
           const home = competitors.find((c) => c.homeAway === "home");
