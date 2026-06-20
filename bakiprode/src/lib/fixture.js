@@ -101,7 +101,7 @@ export const PARTIDOS_GRUPOS = [
   { id:28, grupo:"A", local:"México",              visitante:"Corea del Sur",        fecha:"jue, 18 jun", hora:"22:00", fechaISO:"2026-06-18", fechaSort:1750276800000 },
   { id:29, grupo:"D", local:"Estados Unidos",      visitante:"Australia",            fecha:"vie, 19 jun", hora:"16:00", fechaISO:"2026-06-19", fechaSort:1750341600000 },
   { id:30, grupo:"C", local:"Escocia",             visitante:"Marruecos",            fecha:"vie, 19 jun", hora:"19:00", fechaISO:"2026-06-19", fechaSort:1750352400000 },
-  { id:31, grupo:"C", local:"Brasil",              visitante:"Haití",                fecha:"vie, 19 jun", hora:"22:00", fechaISO:"2026-06-19", fechaSort:1750363200000 },
+  { id:31, grupo:"C", local:"Brasil",              visitante:"Haití",                fecha:"vie, 19 jun", hora:"21:30", fechaISO:"2026-06-19", fechaSort:1750363200000 },
   { id:32, grupo:"D", local:"Turquía", visitante:"Paraguay", fecha:"sáb, 20 jun", hora:"00:00", fechaISO:"2026-06-20", fechaSort:1781924400000 },
   { id:33, grupo:"F", local:"Países Bajos",        visitante:"Suecia",               fecha:"sáb, 20 jun", hora:"14:00", fechaISO:"2026-06-20", fechaSort:1750417200000 },
   { id:34, grupo:"E", local:"Alemania",            visitante:"Costa de Marfil",      fecha:"sáb, 20 jun", hora:"17:00", fechaISO:"2026-06-20", fechaSort:1750428000000 },
