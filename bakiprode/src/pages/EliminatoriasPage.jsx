@@ -115,8 +115,9 @@ function PartidoElim({ partido, winnerInfo, pred, penaltyPred, onSave, onSavePen
       {/* Fila principal */}
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         {/* Hora + fase */}
-        <div style={{ minWidth: 44, textAlign: "center" }}>
-          <div style={{ fontSize: 11, color: "#5A7298" }}>{partido.hora}</div>
+        <div style={{ minWidth: 70, textAlign: "center" }}>
+          <div style={{ fontSize: 11, color: "#5A7298" }}>{partido.fecha}</div>
+          <div style={{ fontSize: 11, color: "#5A7298" }}>{partido.hora}hs</div>
           <div style={{
             fontSize: 9, background: "#1E2A45", color: "#F2C116",
             borderRadius: 20, padding: "1px 5px", fontWeight: 700, marginTop: 3, display: "inline-block",
