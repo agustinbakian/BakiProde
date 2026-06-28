@@ -1,101 +1,51 @@
 import { useState, useEffect } from "react";
-import { subscribeToResults, subscribeToPredictions, savePrediction } from "../lib/db";
-import { PARTIDOS_GRUPOS, GRUPOS, BRACKET_ELIM, FLAG_ISO } from "../lib/fixture";
+import { subscribeToResults, subscribeToPredictions, savePrediction, savePenaltyPred, calcPointsElim } from "../lib/db";
+import { BRACKET_ELIM, FLAG_ISO } from "../lib/fixture";
 
-// ── Tabla de grupos ───────────────────────────────────────────────────────────
-function calcClasificados(results) {
-  const tablas = {};
-  Object.keys(GRUPOS).forEach((g) => { tablas[g] = {}; });
+// ── buildWinnerIndex — encadena ganadores fase a fase ─────────────────────────
+function buildWinnerIndex(results) {
+  const winners = {};
 
-  PARTIDOS_GRUPOS.forEach((p) => {
-    const res = results[p.id];
-    if (!res) return;
-    const { local: rl, visitante: rv } = res;
-    [p.local, p.visitante].forEach((eq) => {
-      if (!tablas[p.grupo][eq]) tablas[p.grupo][eq] = { pts: 0, gf: 0, gc: 0, dg: 0 };
-    });
-    const tl = tablas[p.grupo][p.local];
-    const tv = tablas[p.grupo][p.visitante];
-    tl.gf += rl; tl.gc += rv; tl.dg += rl - rv;
-    tv.gf += rv; tv.gc += rl; tv.dg += rv - rl;
-    if (rl > rv)      { tl.pts += 3; }
-    else if (rl < rv) { tv.pts += 3; }
-    else              { tl.pts += 1; tv.pts += 1; }
-  });
-
-  const clasificados = {};
-  Object.entries(tablas).forEach(([g, equipos]) => {
-    const sorted = Object.entries(equipos)
-      .sort(([, a], [, b]) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf);
-    clasificados[g] = sorted.map(([name]) => name);
-  });
-  return clasificados;
-}
-
-// ── Resolver equipos de un partido eliminatorio ───────────────────────────────
-// Construye un índice partidoId → ganador basado en resultados
-function buildWinnerIndex(results, clasificados) {
-  const winners = {}; // partidoId → nombre del equipo ganador
-
-  // Primero resolvemos dieciseisavos desde grupos
-  BRACKET_ELIM[0].partidos.forEach((p) => {
-    // Intenta resolver desde clasificados (label tipo "1º A vs 2º B")
-    const m = p.label.match(/^(\d)º ([A-L]) vs (\d)º ([A-L])$/);
-    if (m && clasificados) {
-      const e1 = clasificados[m[2]]?.[parseInt(m[1]) - 1];
-      const e2 = clasificados[m[4]]?.[parseInt(m[3]) - 1];
-      if (e1 && e2) {
+  BRACKET_ELIM.forEach((fase) => {
+    fase.partidos.forEach((p) => {
+      // Dieciseisavos: tienen local/visitante reales hardcodeados en fixture
+      if (p.local && p.visitante) {
         const res = results[p.id];
         if (res?.ganador) {
-          winners[p.id] = { local: e1, visitante: e2, ganador: res.ganador };
+          winners[p.id] = { local: p.local, visitante: p.visitante, ganador: res.ganador };
         } else if (res && res.local !== res.visitante) {
           winners[p.id] = {
-            local: e1, visitante: e2,
-            ganador: res.local > res.visitante ? e1 : e2,
+            local: p.local, visitante: p.visitante,
+            ganador: res.local > res.visitante ? p.local : p.visitante,
           };
-        } else if (res) {
-          winners[p.id] = { local: e1, visitante: e2, ganador: null };
+        } else {
+          winners[p.id] = { local: p.local, visitante: p.visitante, ganador: null };
         }
+        return;
       }
-    }
-  });
 
-  // Luego resolvemos el resto encadenando (octavos, cuartos, semis, final)
-  BRACKET_ELIM.slice(1).forEach((fase) => {
-    fase.partidos.forEach((p) => {
-      // label tipo "Gan. P74 vs Gan. P77" o "Per. P101 vs Per. P102"
+      // Octavos en adelante: resolver desde winners anteriores
       const m = p.label.match(/^(Gan\.|Per\.) (P\d+) vs (Gan\.|Per\.) (P\d+)$/);
       if (!m) return;
-      const tipo1 = m[1]; // "Gan." o "Per."
-      const id1   = m[2];
-      const tipo2 = m[3];
-      const id2   = m[4];
-
-      const w1 = winners[id1];
-      const w2 = winners[id2];
 
       const getTeam = (w, tipo) => {
         if (!w) return null;
         if (tipo === "Gan.") return w.ganador;
-        // Per. = el perdedor
         if (!w.ganador) return null;
         return w.ganador === w.local ? w.visitante : w.local;
       };
 
-      const e1 = getTeam(w1, tipo1);
-      const e2 = getTeam(w2, tipo2);
+      const w1 = winners[m[2]];
+      const w2 = winners[m[4]];
+      const e1 = getTeam(w1, m[1]);
+      const e2 = getTeam(w2, m[3]);
 
       if (e1 && e2) {
         const res = results[p.id];
         if (res?.ganador) {
           winners[p.id] = { local: e1, visitante: e2, ganador: res.ganador };
         } else if (res && res.local !== res.visitante) {
-          winners[p.id] = {
-            local: e1, visitante: e2,
-            ganador: res.local > res.visitante ? e1 : e2,
-          };
-        } else if (res) {
-          winners[p.id] = { local: e1, visitante: e2, ganador: null };
+          winners[p.id] = { local: e1, visitante: e2, ganador: res.local > res.visitante ? e1 : e2 };
         } else {
           winners[p.id] = { local: e1, visitante: e2, ganador: null };
         }
@@ -140,7 +90,7 @@ function ScoreInput({ value, onChange, disabled }) {
 }
 
 // ── ElimCard ──────────────────────────────────────────────────────────────────
-function ElimCard({ partido, winnerInfo, pred, onSave, result }) {
+function ElimCard({ partido, winnerInfo, pred, penaltyPred, onSave, onSavePenalty, result }) {
   const local     = winnerInfo?.local     ?? null;
   const visitante = winnerInfo?.visitante ?? null;
   const hasTeams  = local && visitante;
@@ -150,11 +100,26 @@ function ElimCard({ partido, winnerInfo, pred, onSave, result }) {
   const locked      = isStarted || !!result;
   const hasPred     = pred && pred.local != null && pred.visitante != null;
 
+  // Calcular puntos
+  const { pts, ptsPenal } = result && hasPred
+    ? calcPointsElim(pred, penaltyPred ?? null, result)
+    : { pts: null, ptsPenal: null };
+  const totalPts = (pts ?? 0) + (ptsPenal ?? 0);
+
+  // Color del borde según resultado
+  let borderColor = hasPred ? "#F2C116" : "#1E2A45";
+  let borderLeftColor = hasPred ? "#F2C116" : "#1E2A45";
+  if (result && hasPred) {
+    if (totalPts >= 3)      { borderColor = "#2E7D32"; borderLeftColor = "#4CAF50"; }
+    else if (totalPts >= 1) { borderColor = "#F9A825"; borderLeftColor = "#F2C116"; }
+    else                    { borderColor = "#B71C1C"; borderLeftColor = "#EF5350"; }
+  }
+
   return (
     <div style={{
       background: "#111827",
-      border: hasPred ? "1px solid #F2C116" : "1px solid #1E2A45",
-      borderLeft: hasPred ? "3px solid #F2C116" : "1px solid #1E2A45",
+      border: `1px solid ${borderColor}`,
+      borderLeft: `3px solid ${borderLeftColor}`,
       borderRadius: 12,
       padding: "10px 12px",
     }}>
@@ -175,10 +140,16 @@ function ElimCard({ partido, winnerInfo, pred, onSave, result }) {
           {/* Score */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, justifyContent: "center", margin: "6px 0" }}>
             {result ? (
-              <span style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>
-                {result.local} : {result.visitante}
-                {result.ganador && <span style={{ fontSize: 10, color: "#F2C116", marginLeft: 6 }}>({result.ganador} ✓)</span>}
-              </span>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>
+                  {result.local} : {result.visitante}
+                </div>
+                {result.ganador && (
+                  <div style={{ fontSize: 10, color: "#F2C116", marginTop: 2 }}>
+                    Penales: {result.ganador} ✓
+                  </div>
+                )}
+              </div>
             ) : locked ? (
               <span style={{ fontSize: 14, fontWeight: 700, color: "#3D5070" }}>
                 {hasPred ? `${pred.local} : ${pred.visitante}` : "— : —"}
@@ -200,17 +171,62 @@ function ElimCard({ partido, winnerInfo, pred, onSave, result }) {
             </span>
           </div>
 
+          {/* Selector ganador penales */}
+          <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #1E2A45" }}>
+            <div style={{ fontSize: 10, color: "#5A7298", marginBottom: 4, textAlign: "center" }}>
+              Ganador en penales
+            </div>
+            <div style={{ display: "flex", gap: 4, justifyContent: "center" }}>
+              {[local, visitante].map((eq) => {
+                const isSelected = penaltyPred === eq;
+                const isCorrect  = result?.ganador && result.ganador === eq && isSelected;
+                const isWrong    = result?.ganador && result.ganador !== eq && isSelected;
+                return (
+                  <button
+                    key={eq}
+                    onClick={() => !locked && onSavePenalty(eq)}
+                    disabled={locked}
+                    style={{
+                      padding: "3px 8px", fontSize: 10, fontWeight: 700, borderRadius: 20,
+                      cursor: locked ? "default" : "pointer",
+                      background: isCorrect ? "#1B5E20" : isWrong ? "#B71C1C" : isSelected ? "#F2C116" : "transparent",
+                      color: isCorrect ? "#A5D6A7" : isWrong ? "#FFCDD2" : isSelected ? "#0A0F1E" : "#5A7298",
+                      border: `1px solid ${isCorrect ? "#4CAF50" : isWrong ? "#EF5350" : isSelected ? "#F2C116" : "#1E2A45"}`,
+                    }}
+                  >
+                    {isCorrect ? "✓ " : ""}{eq}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Puntos */}
+          {result && hasPred && (
+            <div style={{ marginTop: 6, textAlign: "center" }}>
+              {totalPts > 0
+                ? <span style={{ fontSize: 11, fontWeight: 800, color: totalPts >= 3 ? "#4CAF50" : "#F2C116" }}>+{totalPts} pts</span>
+                : <span style={{ fontSize: 11, color: "#EF5350", fontWeight: 700 }}>✗ 0 pts</span>
+              }
+              {ptsPenal !== null && (
+                <span style={{ fontSize: 10, color: "#5A7298", marginLeft: 4 }}>
+                  ({ptsPenal > 0 ? "+1 penales" : "0 penales"})
+                </span>
+              )}
+            </div>
+          )}
+
           {/* Estado */}
-          <div style={{ marginTop: 6, textAlign: "right" }}>
-            {result && hasPred
-              ? null // podrías agregar PtsChip acá en el futuro
-              : locked && hasPred
+          {!result && (
+            <div style={{ marginTop: 4, textAlign: "right" }}>
+              {locked && hasPred
                 ? <span style={{ fontSize: 10, color: "#F2C116" }}>🔒 en juego</span>
                 : hasPred
                   ? <span style={{ fontSize: 10, color: "#3D5070" }}>por jugar</span>
                   : null
-            }
-          </div>
+              }
+            </div>
+          )}
         </>
       ) : (
         <div style={{ fontSize: 11, color: "#5A7298", fontStyle: "italic", textAlign: "center", padding: "8px 0" }}>
@@ -225,9 +241,10 @@ const COLS = { R32: 4, R16: 4, QF: 2, SF: 2, "3P": 1, F: 1 };
 
 // ── EliminatoriasPage ─────────────────────────────────────────────────────────
 export function EliminatoriasPage({ user }) {
-  const [results,     setResults]     = useState({});
-  const [predictions, setPredictions] = useState({});
-  const [drafts,      setDrafts]      = useState({});
+  const [results,       setResults]       = useState({});
+  const [predictions,   setPredictions]   = useState({});
+  const [drafts,        setDrafts]        = useState({});
+  const [penaltyDrafts, setPenaltyDrafts] = useState({});
 
   useEffect(() => {
     const u1 = subscribeToResults(setResults);
@@ -235,13 +252,7 @@ export function EliminatoriasPage({ user }) {
     return () => { u1(); u2(); };
   }, [user.uid]);
 
-  const totalGrupos  = PARTIDOS_GRUPOS.length;
-  const finalizados  = PARTIDOS_GRUPOS.filter((p) => results[p.id]).length;
-  const gruposCompletos = finalizados === totalGrupos;
-  const pct = Math.round((finalizados / totalGrupos) * 100);
-
-  const clasificados = gruposCompletos ? calcClasificados(results) : null;
-  const winnerIndex  = buildWinnerIndex(results, clasificados);
+  const winnerIndex = buildWinnerIndex(results);
 
   function handleSave(partidoId, side, val) {
     setDrafts((prev) => {
@@ -257,30 +268,13 @@ export function EliminatoriasPage({ user }) {
     });
   }
 
+  function handlePenalty(partidoId, equipo) {
+    setPenaltyDrafts((prev) => ({ ...prev, [partidoId]: equipo }));
+    savePenaltyPred(user.uid, partidoId, equipo);
+  }
+
   return (
     <div>
-      {!gruposCompletos && (
-        <div style={{ marginBottom: 24 }}>
-          <div style={{
-            background: "#111827", border: "1px solid #1E2A45", borderRadius: 10,
-            padding: "12px 16px", fontSize: 13, color: "#5A7298", marginBottom: 12,
-            display: "flex", alignItems: "center", gap: 8,
-          }}>
-            <span>🔒</span>
-            Los equipos aparecen automáticamente cuando terminen todos los partidos de grupos.
-          </div>
-          <div style={{ fontSize: 13, color: "#5A7298", marginBottom: 6 }}>
-            {finalizados} de {totalGrupos} partidos de grupos finalizados
-          </div>
-          <div style={{ background: "#1E2A45", borderRadius: 20, height: 6 }}>
-            <div style={{
-              background: "#F2C116", height: 6, borderRadius: 20,
-              width: `${pct}%`, transition: "width 0.4s",
-            }} />
-          </div>
-        </div>
-      )}
-
       {BRACKET_ELIM.map((fase) => {
         const cols = COLS[fase.ronda] || 2;
         return (
@@ -299,17 +293,20 @@ export function EliminatoriasPage({ user }) {
               gap: 8, marginBottom: 4,
             }}>
               {fase.partidos.map((p) => {
-                const pred       = drafts[p.id] ?? predictions[p.id];
-                const result     = results[p.id];
-                const winnerInfo = winnerIndex[p.id];
+                const pred        = drafts[p.id]        ?? predictions[p.id];
+                const penaltyPred = penaltyDrafts[p.id] ?? predictions[`${p.id}_penal`];
+                const result      = results[p.id];
+                const winnerInfo  = winnerIndex[p.id];
                 return (
                   <ElimCard
                     key={p.id}
                     partido={p}
                     winnerInfo={winnerInfo}
                     pred={pred}
+                    penaltyPred={penaltyPred}
                     result={result}
                     onSave={(side, val) => handleSave(p.id, side, val)}
+                    onSavePenalty={(eq) => handlePenalty(p.id, eq)}
                   />
                 );
               })}
