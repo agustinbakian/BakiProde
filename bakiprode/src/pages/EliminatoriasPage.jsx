@@ -1,30 +1,26 @@
 import { useState, useEffect } from "react";
-import { subscribeToResults, subscribeToPredictions, savePrediction, savePenaltyPred, calcPointsElim } from "../lib/db";
-import { BRACKET_ELIM, FLAG_ISO } from "../lib/fixture";
+import { Flag } from "../components/Flag";
+import { BRACKET_ELIM } from "../lib/fixture";
+import { savePrediction, subscribeToPredictions, subscribeToResults, savePenaltyPred, calcPointsElim } from "../lib/db";
 
-// ── buildWinnerIndex — encadena ganadores fase a fase ─────────────────────────
+// ── buildWinnerIndex ──────────────────────────────────────────────────────────
 function buildWinnerIndex(results) {
   const winners = {};
 
   BRACKET_ELIM.forEach((fase) => {
     fase.partidos.forEach((p) => {
-      // Dieciseisavos: tienen local/visitante reales hardcodeados en fixture
       if (p.local && p.visitante) {
         const res = results[p.id];
         if (res?.ganador) {
           winners[p.id] = { local: p.local, visitante: p.visitante, ganador: res.ganador };
         } else if (res && res.local !== res.visitante) {
-          winners[p.id] = {
-            local: p.local, visitante: p.visitante,
-            ganador: res.local > res.visitante ? p.local : p.visitante,
-          };
+          winners[p.id] = { local: p.local, visitante: p.visitante, ganador: res.local > res.visitante ? p.local : p.visitante };
         } else {
           winners[p.id] = { local: p.local, visitante: p.visitante, ganador: null };
         }
         return;
       }
 
-      // Octavos en adelante: resolver desde winners anteriores
       const m = p.label.match(/^(Gan\.|Per\.) (P\d+) vs (Gan\.|Per\.) (P\d+)$/);
       if (!m) return;
 
@@ -35,10 +31,8 @@ function buildWinnerIndex(results) {
         return w.ganador === w.local ? w.visitante : w.local;
       };
 
-      const w1 = winners[m[2]];
-      const w2 = winners[m[4]];
-      const e1 = getTeam(w1, m[1]);
-      const e2 = getTeam(w2, m[3]);
+      const e1 = getTeam(winners[m[2]], m[1]);
+      const e2 = getTeam(winners[m[4]], m[3]);
 
       if (e1 && e2) {
         const res = results[p.id];
@@ -56,188 +50,207 @@ function buildWinnerIndex(results) {
   return winners;
 }
 
-// ── Flag ──────────────────────────────────────────────────────────────────────
-function Flag({ country }) {
-  const code = FLAG_ISO[country];
-  if (!code) return null;
-  return (
-    <img
-      src={`https://flagcdn.com/20x15/${code}.png`}
-      width={20} height={15} alt={country}
-      style={{ borderRadius: 2, objectFit: "cover", border: "0.5px solid rgba(0,0,0,0.1)", flexShrink: 0 }}
-    />
-  );
+// ── Estilos de card (igual que grupos) ────────────────────────────────────────
+function getCardStyle(totalPts, hasPred, isFinished) {
+  if (!isFinished) {
+    return {
+      background: hasPred ? "#111827" : "#0D1424",
+      border: hasPred ? "1px solid #F2C116" : "1px solid #1E2A45",
+      borderLeft: hasPred ? "3px solid #F2C116" : "1px solid #1E2A45",
+    };
+  }
+  if (totalPts >= 3) return { background: "#0A1F0A", border: "1px solid #2E7D32", borderLeft: "4px solid #4CAF50" };
+  if (totalPts >= 1) return { background: "#1A1500", border: "1px solid #F9A825", borderLeft: "4px solid #F2C116" };
+  if (hasPred)       return { background: "#1F0A0A", border: "1px solid #B71C1C", borderLeft: "4px solid #EF5350" };
+  return { background: "#0D1424", border: "1px solid #1E2A45" };
 }
 
-// ── ScoreInput ────────────────────────────────────────────────────────────────
-function ScoreInput({ value, onChange, disabled }) {
+function PtsChip({ pts, ptsPenal }) {
+  if (pts === null) return null;
+  const total = pts + (ptsPenal ?? 0);
+  if (pts === 3)
+    return <span style={{ background: "#1B5E20", color: "#A5D6A7", fontSize: 12, fontWeight: 800, padding: "3px 10px", borderRadius: 20 }}>+{total} ✓</span>;
+  if (pts === 1 || ptsPenal > 0)
+    return <span style={{ background: "#F57F17", color: "#FFF9C4", fontSize: 12, fontWeight: 800, padding: "3px 10px", borderRadius: 20 }}>+{total}</span>;
+  return <span style={{ background: "#B71C1C", color: "#FFCDD2", fontSize: 12, fontWeight: 800, padding: "3px 10px", borderRadius: 20 }}>✗ 0</span>;
+}
+
+function ScoreInput({ value, onChange }) {
   return (
     <input
       type="number" min="0" max="20"
       value={value ?? ""}
       placeholder="—"
-      disabled={disabled}
       onChange={(e) => onChange(e.target.value === "" ? null : parseInt(e.target.value, 10))}
       style={{
-        width: 32, height: 32, textAlign: "center", fontSize: 14, fontWeight: 600,
+        width: 36, height: 36, textAlign: "center", fontSize: 16, fontWeight: 700,
         border: "1px solid #1E2A45", borderRadius: 8,
-        background: disabled ? "#060C18" : "#111827",
-        color: disabled ? "#3D5070" : "#fff",
-        outline: "none",
+        background: "#111827", color: "#fff", outline: "none",
       }}
     />
   );
 }
 
-// ── ElimCard ──────────────────────────────────────────────────────────────────
-function ElimCard({ partido, winnerInfo, pred, penaltyPred, onSave, onSavePenalty, result }) {
+// ── PartidoElim — mismo layout horizontal que grupos ─────────────────────────
+function PartidoElim({ partido, winnerInfo, pred, penaltyPred, onSave, onSavePenalty, result }) {
   const local     = winnerInfo?.local     ?? null;
   const visitante = winnerInfo?.visitante ?? null;
   const hasTeams  = local && visitante;
 
   const partidoDate = new Date(`${partido.fechaISO}T${partido.hora}:00-03:00`);
   const isStarted   = Date.now() >= partidoDate.getTime();
-  const locked      = isStarted || !!result;
+  const isFinished  = !!result;
+  const locked      = isStarted || isFinished;
   const hasPred     = pred && pred.local != null && pred.visitante != null;
 
-  // Calcular puntos
-  const { pts, ptsPenal } = result && hasPred
+  const { pts, ptsPenal } = isFinished && hasPred
     ? calcPointsElim(pred, penaltyPred ?? null, result)
     : { pts: null, ptsPenal: null };
   const totalPts = (pts ?? 0) + (ptsPenal ?? 0);
 
-  // Color del borde según resultado
-  let borderColor = hasPred ? "#F2C116" : "#1E2A45";
-  let borderLeftColor = hasPred ? "#F2C116" : "#1E2A45";
-  if (result && hasPred) {
-    if (totalPts >= 3)      { borderColor = "#2E7D32"; borderLeftColor = "#4CAF50"; }
-    else if (totalPts >= 1) { borderColor = "#F9A825"; borderLeftColor = "#F2C116"; }
-    else                    { borderColor = "#B71C1C"; borderLeftColor = "#EF5350"; }
-  }
+  const cardStyle = getCardStyle(totalPts, hasPred, isFinished);
 
   return (
-    <div style={{
-      background: "#111827",
-      border: `1px solid ${borderColor}`,
-      borderLeft: `3px solid ${borderLeftColor}`,
-      borderRadius: 12,
-      padding: "10px 12px",
-    }}>
-      <div style={{ fontSize: 10, fontWeight: 600, color: "#5A7298", marginBottom: 6 }}>
-        {partido.fecha} · {partido.hora}hs
+    <div style={{ ...cardStyle, borderRadius: 12, padding: "10px 14px", marginBottom: 6 }}>
+      {/* Fila principal */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {/* Hora + fase */}
+        <div style={{ minWidth: 44, textAlign: "center" }}>
+          <div style={{ fontSize: 11, color: "#5A7298" }}>{partido.hora}</div>
+          <div style={{
+            fontSize: 9, background: "#1E2A45", color: "#F2C116",
+            borderRadius: 20, padding: "1px 5px", fontWeight: 700, marginTop: 3, display: "inline-block",
+          }}>ELIM</div>
+        </div>
+
+        {/* Equipo local */}
+        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, justifyContent: "flex-end", minWidth: 0 }}>
+          {hasTeams ? (
+            <>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#E8EDF5", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {local}
+              </span>
+              <Flag country={local} size={22} />
+            </>
+          ) : (
+            <span style={{ fontSize: 11, color: "#5A7298", fontStyle: "italic" }}>Por definir</span>
+          )}
+        </div>
+
+        {/* Centro: resultado o inputs */}
+        {hasTeams ? (
+          isFinished ? (
+            <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", minWidth: 52, textAlign: "center" }}>
+              {result.local} : {result.visitante}
+            </div>
+          ) : locked ? (
+            <div style={{ fontSize: 15, fontWeight: 700, minWidth: 52, textAlign: "center", color: "#3D5070" }}>
+              {hasPred
+                ? <>{pred.local} <span style={{ fontSize: 11 }}>:</span> {pred.visitante}</>
+                : "— : —"
+              }
+            </div>
+          ) : (
+            <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+              <ScoreInput value={pred?.local ?? null}     onChange={(v) => onSave("local", v)} />
+              <span style={{ fontSize: 11, color: "#3D5070", fontWeight: 700 }}>:</span>
+              <ScoreInput value={pred?.visitante ?? null} onChange={(v) => onSave("visitante", v)} />
+            </div>
+          )
+        ) : (
+          <div style={{ fontSize: 13, color: "#3D5070", minWidth: 52, textAlign: "center" }}>— : —</div>
+        )}
+
+        {/* Equipo visitante */}
+        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+          {hasTeams ? (
+            <>
+              <Flag country={visitante} size={22} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#E8EDF5", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {visitante}
+              </span>
+            </>
+          ) : (
+            <span style={{ fontSize: 11, color: "#5A7298", fontStyle: "italic" }}>Por definir</span>
+          )}
+        </div>
+
+        {/* Chip de puntos / estado */}
+        <div style={{ minWidth: 36, textAlign: "right" }}>
+          {isFinished && hasPred
+            ? <PtsChip pts={pts} ptsPenal={ptsPenal} />
+            : locked && hasPred
+              ? <span style={{ fontSize: 10, color: "#F2C116" }}>🔒 en juego</span>
+              : hasPred
+                ? <span style={{ fontSize: 10, color: "#3D5070" }}>por jugar</span>
+                : null
+          }
+        </div>
       </div>
 
-      {hasTeams ? (
-        <>
-          {/* Equipo local */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-            <Flag country={local} />
-            <span style={{ fontSize: 12, fontWeight: 600, color: "#E8EDF5", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {local}
-            </span>
+      {/* Pronóstico + penales debajo */}
+      {hasTeams && locked && hasPred && (
+        <div style={{ marginTop: 6, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
+          {/* Pronóstico */}
+          <span style={{ fontSize: 11, color: "#3D5070" }}>
+            tu pronóstico: <span style={{ color: "#5A7298", fontWeight: 700 }}>{pred.local} - {pred.visitante}</span>
+          </span>
+
+          {/* Selector penales */}
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <span style={{ fontSize: 10, color: "#5A7298" }}>Penales:</span>
+            {[local, visitante].map((eq) => {
+              const isSelected = penaltyPred === eq;
+              const isCorrect  = isFinished && result?.ganador === eq && isSelected;
+              const isWrong    = isFinished && result?.ganador && result.ganador !== eq && isSelected;
+              return (
+                <button
+                  key={eq}
+                  onClick={() => !locked && onSavePenalty(eq)}
+                  disabled={locked}
+                  style={{
+                    padding: "2px 8px", fontSize: 10, fontWeight: 700, borderRadius: 20,
+                    cursor: locked ? "default" : "pointer",
+                    background: isCorrect ? "#1B5E20" : isWrong ? "#B71C1C" : isSelected ? "#F2C116" : "transparent",
+                    color: isCorrect ? "#A5D6A7" : isWrong ? "#FFCDD2" : isSelected ? "#0A0F1E" : "#5A7298",
+                    border: `1px solid ${isCorrect ? "#4CAF50" : isWrong ? "#EF5350" : isSelected ? "#F2C116" : "#1E2A45"}`,
+                  }}
+                >
+                  {isCorrect ? "✓ " : ""}{eq}
+                </button>
+              );
+            })}
           </div>
+        </div>
+      )}
 
-          {/* Score */}
-          <div style={{ display: "flex", alignItems: "center", gap: 4, justifyContent: "center", margin: "6px 0" }}>
-            {result ? (
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>
-                  {result.local} : {result.visitante}
-                </div>
-                {result.ganador && (
-                  <div style={{ fontSize: 10, color: "#F2C116", marginTop: 2 }}>
-                    Penales: {result.ganador} ✓
-                  </div>
-                )}
-              </div>
-            ) : locked ? (
-              <span style={{ fontSize: 14, fontWeight: 700, color: "#3D5070" }}>
-                {hasPred ? `${pred.local} : ${pred.visitante}` : "— : —"}
-              </span>
-            ) : (
-              <>
-                <ScoreInput value={pred?.local ?? null}     onChange={(v) => onSave("local", v)}     disabled={false} />
-                <span style={{ fontSize: 11, color: "#3D5070", fontWeight: 700 }}>:</span>
-                <ScoreInput value={pred?.visitante ?? null} onChange={(v) => onSave("visitante", v)} disabled={false} />
-              </>
-            )}
-          </div>
-
-          {/* Equipo visitante */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
-            <Flag country={visitante} />
-            <span style={{ fontSize: 12, fontWeight: 600, color: "#E8EDF5", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {visitante}
-            </span>
-          </div>
-
-          {/* Selector ganador penales */}
-          <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #1E2A45" }}>
-            <div style={{ fontSize: 10, color: "#5A7298", marginBottom: 4, textAlign: "center" }}>
-              Ganador en penales
-            </div>
-            <div style={{ display: "flex", gap: 4, justifyContent: "center" }}>
-              {[local, visitante].map((eq) => {
-                const isSelected = penaltyPred === eq;
-                const isCorrect  = result?.ganador && result.ganador === eq && isSelected;
-                const isWrong    = result?.ganador && result.ganador !== eq && isSelected;
-                return (
-                  <button
-                    key={eq}
-                    onClick={() => !locked && onSavePenalty(eq)}
-                    disabled={locked}
-                    style={{
-                      padding: "3px 8px", fontSize: 10, fontWeight: 700, borderRadius: 20,
-                      cursor: locked ? "default" : "pointer",
-                      background: isCorrect ? "#1B5E20" : isWrong ? "#B71C1C" : isSelected ? "#F2C116" : "transparent",
-                      color: isCorrect ? "#A5D6A7" : isWrong ? "#FFCDD2" : isSelected ? "#0A0F1E" : "#5A7298",
-                      border: `1px solid ${isCorrect ? "#4CAF50" : isWrong ? "#EF5350" : isSelected ? "#F2C116" : "#1E2A45"}`,
-                    }}
-                  >
-                    {isCorrect ? "✓ " : ""}{eq}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Puntos */}
-          {result && hasPred && (
-            <div style={{ marginTop: 6, textAlign: "center" }}>
-              {totalPts > 0
-                ? <span style={{ fontSize: 11, fontWeight: 800, color: totalPts >= 3 ? "#4CAF50" : "#F2C116" }}>+{totalPts} pts</span>
-                : <span style={{ fontSize: 11, color: "#EF5350", fontWeight: 700 }}>✗ 0 pts</span>
-              }
-              {ptsPenal !== null && (
-                <span style={{ fontSize: 10, color: "#5A7298", marginLeft: 4 }}>
-                  ({ptsPenal > 0 ? "+1 penales" : "0 penales"})
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Estado */}
-          {!result && (
-            <div style={{ marginTop: 4, textAlign: "right" }}>
-              {locked && hasPred
-                ? <span style={{ fontSize: 10, color: "#F2C116" }}>🔒 en juego</span>
-                : hasPred
-                  ? <span style={{ fontSize: 10, color: "#3D5070" }}>por jugar</span>
-                  : null
-              }
-            </div>
-          )}
-        </>
-      ) : (
-        <div style={{ fontSize: 11, color: "#5A7298", fontStyle: "italic", textAlign: "center", padding: "8px 0" }}>
-          {partido.label}
+      {/* Selector penales cuando no está bloqueado */}
+      {hasTeams && !locked && (
+        <div style={{ marginTop: 6, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4 }}>
+          <span style={{ fontSize: 10, color: "#5A7298" }}>Penales:</span>
+          {[local, visitante].map((eq) => {
+            const isSelected = penaltyPred === eq;
+            return (
+              <button
+                key={eq}
+                onClick={() => onSavePenalty(eq)}
+                style={{
+                  padding: "2px 8px", fontSize: 10, fontWeight: 700, borderRadius: 20,
+                  cursor: "pointer",
+                  background: isSelected ? "#F2C116" : "transparent",
+                  color: isSelected ? "#0A0F1E" : "#5A7298",
+                  border: `1px solid ${isSelected ? "#F2C116" : "#1E2A45"}`,
+                }}
+              >
+                {eq}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
-
-const COLS = { R32: 4, R16: 4, QF: 2, SF: 2, "3P": 1, F: 1 };
 
 // ── EliminatoriasPage ─────────────────────────────────────────────────────────
 export function EliminatoriasPage({ user }) {
@@ -275,45 +288,42 @@ export function EliminatoriasPage({ user }) {
 
   return (
     <div>
-      {BRACKET_ELIM.map((fase) => {
-        const cols = COLS[fase.ronda] || 2;
-        return (
-          <div key={fase.ronda}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "20px 0 10px" }}>
-              <span style={{
-                background: "#1E2A45", color: "#F2C116", fontSize: 12,
-                fontWeight: 600, padding: "3px 12px", borderRadius: 20,
-              }}>
-                {fase.fase}
-              </span>
-            </div>
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: `repeat(${cols}, 1fr)`,
-              gap: 8, marginBottom: 4,
-            }}>
-              {fase.partidos.map((p) => {
-                const pred        = drafts[p.id]        ?? predictions[p.id];
-                const penaltyPred = penaltyDrafts[p.id] ?? predictions[`${p.id}_penal`];
-                const result      = results[p.id];
-                const winnerInfo  = winnerIndex[p.id];
-                return (
-                  <ElimCard
-                    key={p.id}
-                    partido={p}
-                    winnerInfo={winnerInfo}
-                    pred={pred}
-                    penaltyPred={penaltyPred}
-                    result={result}
-                    onSave={(side, val) => handleSave(p.id, side, val)}
-                    onSavePenalty={(eq) => handlePenalty(p.id, eq)}
-                  />
-                );
-              })}
-            </div>
+      {BRACKET_ELIM.map((fase) => (
+        <div key={fase.ronda}>
+          {/* Header de fase */}
+          <div style={{
+            fontSize: 11, fontWeight: 700, color: "#5A7298",
+            textTransform: "uppercase", letterSpacing: "1px",
+            padding: "10px 0 6px", borderBottom: "1px solid #1E2A45",
+            marginBottom: 8, display: "flex", alignItems: "center", gap: 8,
+          }}>
+            {fase.fase}
+            <span style={{ background: "#1E2A45", borderRadius: 6, padding: "2px 7px", fontSize: 10, color: "#3D5070", fontWeight: 600, textTransform: "none", letterSpacing: 0 }}>
+              {fase.partidos.length} partido{fase.partidos.length !== 1 ? "s" : ""}
+            </span>
           </div>
-        );
-      })}
+
+          {/* Partidos */}
+          {fase.partidos.map((p) => {
+            const pred        = drafts[p.id]        ?? predictions[p.id];
+            const penaltyPred = penaltyDrafts[p.id] ?? predictions[`${p.id}_penal`];
+            const result      = results[p.id];
+            const winnerInfo  = winnerIndex[p.id];
+            return (
+              <PartidoElim
+                key={p.id}
+                partido={p}
+                winnerInfo={winnerInfo}
+                pred={pred}
+                penaltyPred={penaltyPred}
+                result={result}
+                onSave={(side, val) => handleSave(p.id, side, val)}
+                onSavePenalty={(eq) => handlePenalty(p.id, eq)}
+              />
+            );
+          })}
+        </div>
+      ))}
     </div>
   );
 }
