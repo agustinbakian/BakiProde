@@ -32,18 +32,19 @@ function PartidoRow({ partido, result, esElim }) {
     }
   }, [result]);
 
+  const equipoLocal     = esElim ? (partido.local     ?? "Local")     : partido.local;
+  const equipoVisitante = esElim ? (partido.visitante ?? "Visitante") : partido.visitante;
+
   async function handleSave() {
     const l = parseInt(localVal);
     const v = parseInt(visitanteVal);
     if (isNaN(l) || isNaN(v)) return;
     setSaving(true);
     await saveResult(partido.id, l, v);
-    // Si hay ganador claro, lo guardamos automáticamente
-    if (esElim && l !== v) {
-      const ganadorAuto = partido.equipos
-        ? (l > v ? partido.equipos[0] : partido.equipos[1])
-        : null;
-      if (ganadorAuto) await saveWinner(partido.id, ganadorAuto);
+    // Si hay ganador claro en eliminatorias, lo guardamos automáticamente
+    if (esElim && l !== v && partido.local) {
+      const ganadorAuto = l > v ? partido.local : partido.visitante;
+      await saveWinner(partido.id, ganadorAuto);
     }
     setSaving(false);
     setSaved(true);
@@ -59,13 +60,8 @@ function PartidoRow({ partido, result, esElim }) {
   const l = parseInt(localVal);
   const v = parseInt(visitanteVal);
   const hayResultado = !isNaN(l) && !isNaN(v) && result;
-  const esEmpate = hayResultado && l === v;
+  const esEmpate     = hayResultado && l === v;
   const ganadorActual = result?.ganador ?? null;
-
-  // Para eliminatorias con empate necesitamos saber los equipos
-  // Los pasamos desde afuera via partido.equipos
-  const equipoLocal     = esElim ? (partido.equipos?.[0] ?? "Local")     : partido.local;
-  const equipoVisitante = esElim ? (partido.equipos?.[1] ?? "Visitante") : partido.visitante;
 
   return (
     <div style={{
@@ -88,8 +84,8 @@ function PartidoRow({ partido, result, esElim }) {
 
         <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
           {esElim ? (
-            <span style={{ flex: 1, fontSize: 12, color: "#5A7298", fontStyle: "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {partido.label}
+            <span style={{ flex: 1, fontSize: 12, color: "#5A7298", fontStyle: partido.local ? "normal" : "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {partido.local ? `${partido.local} vs ${partido.visitante}` : partido.label}
             </span>
           ) : (
             <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: "#E8EDF5", textAlign: "right", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -141,7 +137,7 @@ function PartidoRow({ partido, result, esElim }) {
         </button>
       </div>
 
-      {/* Selector de ganador — solo en eliminatorias con empate */}
+      {/* Selector de ganador por penales — solo en eliminatorias con empate */}
       {esElim && hayResultado && esEmpate && (
         <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #1E2A45", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <span style={{ fontSize: 11, color: "#5A7298", fontWeight: 600 }}>Ganador (penales):</span>
@@ -164,7 +160,7 @@ function PartidoRow({ partido, result, esElim }) {
         </div>
       )}
 
-      {/* Ganador automático — empate resuelto o ganador claro */}
+      {/* Ganador ya marcado en partido sin empate */}
       {esElim && result?.ganador && !esEmpate && (
         <div style={{ marginTop: 6, fontSize: 11, color: "#4CAF50" }}>
           ✓ Ganador: <strong>{result.ganador}</strong>
@@ -197,7 +193,9 @@ export function AdminPage() {
     if (filtro === "cargados"   && !tieneResultado) return false;
     if (search) {
       const q = search.toLowerCase();
-      if (esElim) return p.label.toLowerCase().includes(q) || p.id.toLowerCase().includes(q);
+      if (esElim) return (p.local ?? p.label ?? "").toLowerCase().includes(q) ||
+                         (p.visitante ?? "").toLowerCase().includes(q) ||
+                         p.id.toLowerCase().includes(q);
       return p.local.toLowerCase().includes(q) || p.visitante.toLowerCase().includes(q);
     }
     return true;
@@ -277,7 +275,9 @@ export function AdminPage() {
             if (filtro === "cargados"   && !tieneResultado) return false;
             if (search) {
               const q = search.toLowerCase();
-              return p.label.toLowerCase().includes(q) || p.id.toLowerCase().includes(q);
+              return (p.local ?? p.label ?? "").toLowerCase().includes(q) ||
+                     (p.visitante ?? "").toLowerCase().includes(q) ||
+                     p.id.toLowerCase().includes(q);
             }
             return true;
           });
