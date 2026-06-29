@@ -2,13 +2,15 @@ import { useState, useEffect } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { useResultsSync } from "./hooks/useResultsSync";
 import { subscribeToPredictions, subscribeToResults, calcUserStats } from "./lib/db";
-import { PARTIDOS_GRUPOS } from "./lib/fixture";
+import { PARTIDOS_GRUPOS, BRACKET_ELIM } from "./lib/fixture";
 import { LoginPage } from "./pages/LoginPage";
 import { FixturePage } from "./pages/FixturePage";
 import { EliminatoriasPage } from "./pages/EliminatoriasPage";
 import { RankingPage } from "./pages/RankingPage";
 import { AdminPage, isAdmin } from "./pages/AdminPage";
 import { SidebarRanking } from "./components/SidebarRanking";
+
+const TOTAL_PARTIDOS = PARTIDOS_GRUPOS.length + BRACKET_ELIM.flatMap(f => f.partidos).length;
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -40,7 +42,7 @@ function StatsBar({ user }) {
     }}>
       {[
         { label: "Mis puntos",  value: pts,       sub: `${exact} exactos · ${winner} ganador`, gold: true },
-        { label: "Pronósticos", value: predCount, sub: `de ${PARTIDOS_GRUPOS.length} partidos`, gold: false },
+        { label: "Pronósticos", value: predCount, sub: `de ${TOTAL_PARTIDOS} partidos`, gold: false },
       ].map(({ label, value, sub, gold }) => (
         <div key={label} style={{ background: "#111827", borderRadius: 8, padding: "10px 12px", border: "1px solid #1E2A45" }}>
           <div style={{ fontSize: 10, color: "#5A7298", textTransform: "uppercase", letterSpacing: ".5px", fontWeight: 600, marginBottom: 3 }}>{label}</div>
@@ -72,7 +74,7 @@ function StatsBarDesktop({ user }) {
     }}>
       {[
         { label: "Mis puntos",  value: pts,       sub: `${exact} exactos · ${winner} ganador`, gold: true },
-        { label: "Pronósticos", value: predCount, sub: `de ${PARTIDOS_GRUPOS.length} partidos`, gold: false },
+        { label: "Pronósticos", value: predCount, sub: `de ${TOTAL_PARTIDOS} partidos`, gold: false },
         { label: "Mi posición", value: "—",        sub: "ranking en vivo", gold: true },
       ].map(({ label, value, sub, gold }) => (
         <div key={label} style={{ background: "#111827", borderRadius: 8, padding: "10px 12px", border: "1px solid #1E2A45" }}>
@@ -153,7 +155,6 @@ export default function App() {
           <button key={id} onClick={() => setTab(id)} style={{
             padding: isMobile ? "10px 14px" : "10px 16px",
             fontSize: 15, cursor: "pointer",
-            borderBottom: tab === id ? "2px solid #F2C116" : "2px solid transparent",
             color: tab === id ? "#F2C116" : "#5A7298",
             fontWeight: tab === id ? 700 : 500,
             background: "none", border: "none",
