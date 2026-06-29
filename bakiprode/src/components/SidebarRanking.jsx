@@ -3,6 +3,9 @@ import {
   subscribeToUsers, subscribeToAllPredictions,
   subscribeToResults, calcUserStats, subscribeToPredictions,
 } from "../lib/db";
+import { PARTIDOS_GRUPOS, BRACKET_ELIM } from "../lib/fixture";
+
+const TOTAL_PARTIDOS = PARTIDOS_GRUPOS.length + BRACKET_ELIM.flatMap(f => f.partidos).length;
 
 function getInitials(name) {
   return (name || "?").split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
@@ -12,10 +15,10 @@ const MEDAL_BG   = ["#F2C116", "#3D5070", "#8B4513"];
 const MEDAL_TEXT = ["#0A0F1E", "#E8EDF5", "#E8EDF5"];
 
 export function SidebarRanking({ user }) {
-  const [users,       setUsers]       = useState({});
-  const [allPreds,    setAllPreds]    = useState({});
-  const [results,     setResults]     = useState({});
-  const [myPreds,     setMyPreds]     = useState({});
+  const [users,    setUsers]    = useState({});
+  const [allPreds, setAllPreds] = useState({});
+  const [results,  setResults]  = useState({});
+  const [myPreds,  setMyPreds]  = useState({});
 
   useEffect(() => {
     const u1 = subscribeToUsers(setUsers);
@@ -32,19 +35,17 @@ export function SidebarRanking({ user }) {
     .sort((a, b) => b.pts - a.pts || b.exact - a.exact || b.winner - a.winner);
 
   const myStats = calcUserStats(myPreds, results);
-  const myPos   = ranked.findIndex((u) => u.uid === user.uid) + 1;
 
   return (
     <div>
-      {/* Ranking */}
       <div style={{ fontSize: 13, fontWeight: 700, color: "#5A7298", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 12 }}>
         Ranking
       </div>
 
       {ranked.map(({ uid, displayName, photoURL, pts }, i) => {
-        const isMe    = uid === user.uid;
-        const medalBg   = i < 3 ? MEDAL_BG[i]   : "#1E2A45";
-        const medalText = i < 3 ? MEDAL_TEXT[i]  : "#5A7298";
+        const isMe     = uid === user.uid;
+        const medalBg   = i < 3 ? MEDAL_BG[i]  : "#1E2A45";
+        const medalText = i < 3 ? MEDAL_TEXT[i] : "#5A7298";
         return (
           <div key={uid} style={{
             display: "flex", alignItems: "center", gap: 8,
@@ -85,10 +86,10 @@ export function SidebarRanking({ user }) {
           Mis stats
         </div>
         {[
-          { label: "Exactos",         value: myStats.exact,    color: "#F2C116" },
-          { label: "Ganador correcto", value: myStats.winner,   color: "#4CAF50" },
-          { label: "Fallados",         value: myStats.wrong,    color: "#EF5350" },
-          { label: "Sin pronosticar",  value: myStats.predCount != null ? (72 - myStats.predCount) : "—", color: "#E8EDF5" },
+          { label: "Exactos",          value: myStats.exact,  color: "#F2C116" },
+          { label: "Ganador correcto",  value: myStats.winner, color: "#4CAF50" },
+          { label: "Fallados",          value: myStats.wrong,  color: "#EF5350" },
+          { label: "Sin pronosticar",   value: myStats.predCount != null ? (TOTAL_PARTIDOS - myStats.predCount) : "—", color: "#E8EDF5" },
         ].map(({ label, value, color }) => (
           <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: "1px solid #1E2A45" }}>
             <span style={{ fontSize: 13, color: "#5A7298" }}>{label}</span>
