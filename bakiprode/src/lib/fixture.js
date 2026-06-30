@@ -160,7 +160,7 @@ export const BRACKET_ELIM = [
       { id:"P74",  local:"Alemania",              visitante:"Paraguay",              label:"Alemania vs Paraguay",              fecha:"lun, 29 jun", hora:"17:30", fechaISO:"2026-06-29" },
       { id:"P75",  local:"Países Bajos",          visitante:"Marruecos",            label:"Países Bajos vs Marruecos",         fecha:"lun, 29 jun", hora:"22:00", fechaISO:"2026-06-29" },
       { id:"P76",  local:"Brasil",                visitante:"Japón",                label:"Brasil vs Japón",                   fecha:"lun, 29 jun", hora:"14:00", fechaISO:"2026-06-29" },
-      { id:"P77",  local:"Francia",               visitante:"Suecia",               label:"Francia vs Suecia",                 fecha:"mar, 30 jun", hora:"16:00", fechaISO:"2026-06-30" },
+      { id:"P77",  local:"Francia",               visitante:"Suecia",               label:"Francia vs Suecia",                 fecha:"mar, 30 jun", hora:"18:00", fechaISO:"2026-06-30" },
       { id:"P78",  local:"Costa de Marfil",       visitante:"Noruega",              label:"Costa de Marfil vs Noruega",        fecha:"mar, 30 jun", hora:"14:00", fechaISO:"2026-06-30" },
       { id:"P79",  local:"México",                visitante:"Ecuador",              label:"México vs Ecuador",                 fecha:"mar, 30 jun", hora:"22:00", fechaISO:"2026-06-30" },
       { id:"P80",  local:"Inglaterra",            visitante:"RD del Congo",         label:"Inglaterra vs RD del Congo",        fecha:"mié, 1 jul",  hora:"13:00", fechaISO:"2026-07-01" },
